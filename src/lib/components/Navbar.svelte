@@ -199,7 +199,7 @@
 					">DÉCONNEXION</button>
 				</form>
 			{:else}
-				<a href="https://discord.gg/fmAtDqCum" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false} style="
+				<a href="https://discord.gg/DcN95Dbx4" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false} style="
 					display: flex; align-items: center; justify-content: center; gap: 0.6rem;
 					width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 900; letter-spacing: 0.08em;
 					padding: 0.65rem 0; background: #5865f220; color: #a5b4fc;

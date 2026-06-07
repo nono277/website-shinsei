@@ -15,25 +15,35 @@
 
 	let heroVisible = $state(false);
 	let statValues  = $state([0, 0, 0, 0]);
-	const statTargets = [2847, 14293, 847, 5];
-	const statLabels  = ['Éveillés actifs', 'Donjons complétés', 'Failles fermées', 'Classes disponibles'];
+	let statTargets = [0, 0, 0, 0];
+	const statLabels  = ['Joueurs connectés', 'Éveillés actifs', 'Donjons complétés', 'Failles fermées'];
+
+	async function fetchStats() {
+		try {
+			const res = await fetch('/api/stats');
+			if (res.ok) {
+				const data = await res.json();
+				statTargets = [data.online ?? 0, data.eveilles ?? 0, data.donjons ?? 0, data.failles ?? 0];
+				animateStats();
+			}
+		} catch {}
+	}
 
 	onMount(() => {
 		heroVisible = true;
-		const observer = new IntersectionObserver((entries) => {
-			if (entries[0].isIntersecting) { animateStats(); observer.disconnect(); }
-		}, { threshold: 0.3 });
-		const el = document.getElementById('stats-section');
-		if (el) observer.observe(el);
-		return () => observer.disconnect();
+		fetchStats();
+		const interval = setInterval(fetchStats, 30000);
+		return () => clearInterval(interval);
 	});
 
 	function animateStats() {
+		const from = [...statValues];
+		const to = [...statTargets];
 		const start = Date.now();
 		const tick = () => {
-			const p = Math.min((Date.now() - start) / 2000, 1);
+			const p = Math.min((Date.now() - start) / 1500, 1);
 			const e = 1 - Math.pow(1 - p, 3);
-			statValues = statTargets.map(t => Math.round(t * e));
+			statValues = to.map((t, i) => Math.round(from[i] + (t - from[i]) * e));
 			if (p < 1) requestAnimationFrame(tick);
 		};
 		requestAnimationFrame(tick);

@@ -76,12 +76,18 @@
 				<div>
 					<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;">Communauté</p>
 					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
-						{#each [['Discord'], ['Twitter / X'], ['YouTube'], ['Règlement']] as [label]}
-							<span style="font-size: 0.875rem; color: #64748b; cursor: pointer; transition: color 0.2s;"
+						{#each [
+							['Discord',   'https://discord.gg/DcN95Dbx4'],
+							['YouTube',   'https://www.youtube.com/@Shinsei-off'],
+							['TikTok',    'https://www.tiktok.com/@shinsei_officiel'],
+							['Instagram', 'https://www.instagram.com/shinsei.officiel?igsh=MTAwbno2bXZ5OXZmMw=='],
+						] as [label, href]}
+							<a {href} target="_blank" rel="noopener noreferrer"
+								style="font-size: 0.875rem; color: #64748b; text-decoration: none; transition: color 0.2s;"
 								onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#7c3aed'}
 								onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#64748b'}>
 								{label}
-							</span>
+							</a>
 						{/each}
 					</div>
 				</div>
