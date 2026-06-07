@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  shinsei-web:
+    build: .
+    container_name: shinsei-web
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
