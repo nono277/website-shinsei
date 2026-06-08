@@ -111,7 +111,7 @@
 	<!-- Titre flottant -->
 	{#if loaded}
 		<div style="
-			position: absolute; top: 1rem; left: 50%; transform: translateX(-50%);
+			position: absolute; bottom: 1.25rem; left: 50%; transform: translateX(-50%);
 			z-index: 10; text-align: center; pointer-events: none; white-space: nowrap;
 		">
 			<div style="
