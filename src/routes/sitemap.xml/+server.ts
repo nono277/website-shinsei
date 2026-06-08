@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 
-const SITE = 'https://shinsei.fr';
+const SITE = 'https://playshinsei.fr';
 
 const pages = [
 	{ path: '/',            priority: '1.0', changefreq: 'weekly'  },

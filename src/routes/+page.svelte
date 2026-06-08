@@ -68,15 +68,15 @@
 <svelte:head>
 	<title>SHINSEI 新世 — Serveur Minecraft RPG Français</title>
 	<meta name="description" content="SHINSEI est un serveur Minecraft RPG post-apocalyptique français. Rejoignez des factions, éveillez vos pouvoirs et fermez les failles dimensionnelles." />
-	<link rel="canonical" href="https://shinsei.fr" />
+	<link rel="canonical" href="https://playshinsei.fr" />
 	<meta property="og:title" content="SHINSEI 新世 — Serveur Minecraft RPG Français" />
-	<meta property="og:url" content="https://shinsei.fr" />
+	<meta property="og:url" content="https://playshinsei.fr" />
 	<script type="application/ld+json">{JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "VideoGame",
 		"name": "SHINSEI 新世",
 		"description": "Serveur Minecraft RPG post-apocalyptique français. Éveillez vos pouvoirs, choisissez votre faction, fermez les failles dimensionnelles.",
-		"url": "https://shinsei.fr",
+		"url": "https://playshinsei.fr",
 		"genre": "RPG",
 		"gamePlatform": "Minecraft Java Edition",
 		"applicationCategory": "Game",
@@ -84,7 +84,7 @@
 		"publisher": {
 			"@type": "Organization",
 			"name": "SHINSEI",
-			"url": "https://shinsei.fr"
+			"url": "https://playshinsei.fr"
 		}
 	})}</script>
 </svelte:head>
