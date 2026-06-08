@@ -409,10 +409,11 @@
 			</h2>
 		</div>
 
-		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1.5rem;max-width:700px;margin:0 auto;" class="sm:grid-cols-2">
+		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1.5rem;max-width:1000px;margin:0 auto;" class="sm:grid-cols-2 lg:grid-cols-3">
 			{#each [
-				{ username: 'NoPleyZz', role: 'Fondateur',    color: '#f59e0b', badge: 'FOUNDER',    desc: "Créateur de l'univers SHINSEI. Architecte du lore, du système de classes et de la vision RPG du serveur." },
-				{ username: 'Avinc',    role: 'Co-fondateur · Marketing', color: '#7c3aed', badge: 'CO-FOUNDER', desc: "Co-créateur du serveur et responsable marketing. Gestion de la communauté, réseaux sociaux et communication officielle de SHINSEI." },
+				{ username: 'NoPleyZz',  role: 'Fondateur · Développeur principal',   color: '#f59e0b', badge: 'FOUNDER',    desc: "Créateur de SHINSEI et développeur principal. Conception du site, du launcher, du serveur et des mods — l'architecte technique derrière tout l'univers." },
+				{ username: 'Avinc',     role: 'Co-fondateur · Marketing',           color: '#7c3aed', badge: 'CO-FOUNDER', desc: "Co-créateur du serveur et responsable marketing. Gestion de la communauté, réseaux sociaux et communication officielle de SHINSEI." },
+				{ username: 'Azordix_',  role: 'Dev Gameplay · Responsable Admin',   color: '#06b6d4', badge: 'DEV · ADMIN', desc: "Développeur gameplay en soutien et responsable administrateur. Gestion des bots Discord et organisation interne du serveur." },
 			] as member}
 				<div style="
 					background:#0f0f1a;border:1px solid {member.color}30;border-radius:1rem;

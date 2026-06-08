@@ -4,30 +4,33 @@
 
 	let { form: actionData }: { form: ActionData } = $props();
 
-	let sent    = $state(false);
-	let sending = $state(false);
+	let sent       = $state(false);
+	let sending    = $state(false);
+	let localError = $state('');
 
-	const POSTES = ['Modérateur', 'Helper', 'Builder', 'Développeur', 'Community Manager', 'Testeur'];
+	const POSTES = ['Responsable Modérateur', 'Modérateur', 'Helper', 'Builder', 'Community Manager', 'Testeur'];
 
 	let form = $state({
-		pseudo_mc:       '',
-		pseudo_discord:  '',
-		age:             '',
-		pays:            '',
-		disponibilite:   '',
-		exp_staff:       '',
-		anciennete_mc:   '',
-		connais_rpg:     '',
-		pourquoi:        '',
-		decouverte:      '',
-		apport:          '',
-		poste:           '',
-		competences:     '',
-		cas1:            '',
-		cas2:            '',
-		cas3:            '',
-		questions:       '',
-		autre:           '',
+		pseudo_mc:          '',
+		pseudo_discord:     '',
+		email:              '',
+		age:                '',
+		pays:               '',
+		disponibilite:      '',
+		exp_staff:          '',
+		anciennete_mc:      '',
+		connais_rpg:        '',
+		connais_rpg_detail: '',
+		pourquoi:           '',
+		decouverte:         '',
+		apport:             '',
+		poste:              '',
+		competences:        '',
+		cas1:               '',
+		cas2:               '',
+		cas3:               '',
+		questions:          '',
+		autre:              '',
 	});
 
 	$effect(() => {
@@ -95,6 +98,7 @@
 				<h2 style="font-family:'Rajdhani',sans-serif; font-size:1.75rem; font-weight:900; color:#22c55e; margin:0 0 0.5rem;">CANDIDATURE ENVOYÉE</h2>
 				<p style="color:#64748b; font-size:0.875rem;">
 					Ta candidature a bien été reçue.<br/>
+					Un email de confirmation t'a été envoyé.<br/>
 					Un membre de l'équipe te contactera sur Discord !
 				</p>
 				<button onclick={() => { sent = false; }} style="
@@ -106,19 +110,35 @@
 			</div>
 
 		{:else}
-			{#if actionData?.error}
+			{#if localError || actionData?.error}
 				<div style="background:#ef444415;border:1px solid #ef444440;border-radius:0.5rem;padding:0.875rem 1.25rem;margin-bottom:1rem;">
-					<p style="color:#f87171;font-size:0.875rem;margin:0;">{actionData.error}</p>
+					<p style="color:#f87171;font-size:0.875rem;margin:0;">{localError || actionData?.error}</p>
 				</div>
 			{/if}
-			<form method="POST" use:enhance={() => {
+
+			<form method="POST" novalidate use:enhance={() => {
+				localError = '';
 				sending = true;
 				return async ({ result, update }) => {
-					if (result.type === 'success') sent = true;
-					await update({ reset: false });
-					sending = false;
+					try {
+						if (result.type === 'success') {
+							sent = true;
+							await update({ reset: false });
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						} else {
+							await update({ reset: false });
+							window.scrollTo({ top: 0, behavior: 'smooth' });
+						}
+					} finally {
+						sending = false;
+					}
 				};
 			}} style="display:flex; flex-direction:column; gap:1.5rem;">
+
+				<!-- Honeypot anti-spam (invisible aux humains) -->
+				<div style="position:absolute;opacity:0;pointer-events:none;height:0;overflow:hidden;">
+					<input type="text" name="website" tabindex="-1" autocomplete="off" />
+				</div>
 
 				<!-- Infos personnelles -->
 				<div style={sectionStyle}>
@@ -133,6 +153,11 @@
 							<label for="pseudo_discord" style={labelStyle}>Pseudo Discord *</label>
 							<input id="pseudo_discord" name="pseudo_discord" required bind:value={form.pseudo_discord} style={inputStyle} placeholder="steve#0001" onfocus={focus} onblur={blur} />
 						</div>
+					</div>
+
+					<div>
+						<label for="email" style={labelStyle}>Adresse email * (pour la confirmation)</label>
+						<input id="email" name="email" required type="email" bind:value={form.email} style={inputStyle} placeholder="ton@email.com" onfocus={focus} onblur={blur} />
 					</div>
 
 					<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;">
@@ -160,16 +185,28 @@
 						<textarea id="exp_staff" name="exp_staff" bind:value={form.exp_staff} rows="3" style="{inputStyle} resize:vertical;" placeholder="Ex : Modérateur sur ServeurXYZ pendant 6 mois..." onfocus={focus} onblur={blur}></textarea>
 					</div>
 
-					<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+					<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:end;">
 						<div>
 							<label for="anciennete_mc" style={labelStyle}>Depuis combien de temps joues-tu à Minecraft ? *</label>
 							<input id="anciennete_mc" name="anciennete_mc" required bind:value={form.anciennete_mc} style={inputStyle} placeholder="5 ans" onfocus={focus} onblur={blur} />
 						</div>
 						<div>
 							<label for="connais_rpg" style={labelStyle}>Connais-tu les serveurs RPG ? *</label>
-							<input id="connais_rpg" name="connais_rpg" required bind:value={form.connais_rpg} style={inputStyle} placeholder="Oui / Non / lesquels" onfocus={focus} onblur={blur} />
+							<select id="connais_rpg" name="connais_rpg" required bind:value={form.connais_rpg} style="{inputStyle} cursor:pointer;" onfocus={focus} onblur={blur}>
+								<option value="" disabled>Sélectionne...</option>
+								<option value="Non">Non</option>
+								<option value="Un peu">Un peu</option>
+								<option value="Oui">Oui</option>
+							</select>
 						</div>
 					</div>
+
+					{#if form.connais_rpg === 'Oui' || form.connais_rpg === 'Un peu'}
+						<div>
+							<label for="connais_rpg_detail" style={labelStyle}>Lesquels ?</label>
+							<input id="connais_rpg_detail" name="connais_rpg_detail" bind:value={form.connais_rpg_detail} style={inputStyle} placeholder="Ex : Hypixel SkyBlock, McOrigins..." onfocus={focus} onblur={blur} />
+						</div>
+					{/if}
 				</div>
 
 				<!-- Motivation -->
@@ -213,17 +250,17 @@
 
 					<div>
 						<label for="cas1" style={labelStyle}>Un joueur insulte un autre joueur en jeu, que fais-tu ? *</label>
-						<textarea id="cas1" name="cas1" required bind:value={form.cas1} rows="3" style="{inputStyle} resize:vertical;" onfocus={focus} onblur={blur}></textarea>
+						<textarea id="cas1" name="cas1" required bind:value={form.cas1} rows="3" style="{inputStyle} resize:vertical;" placeholder="Décris les étapes que tu suivrais : avertissement, sanction, rapport..." onfocus={focus} onblur={blur}></textarea>
 					</div>
 
 					<div>
 						<label for="cas2" style={labelStyle}>Tu découvres un bug critique sur le serveur, quelle est ta réaction ? *</label>
-						<textarea id="cas2" name="cas2" required bind:value={form.cas2} rows="3" style="{inputStyle} resize:vertical;" onfocus={focus} onblur={blur}></textarea>
+						<textarea id="cas2" name="cas2" required bind:value={form.cas2} rows="3" style="{inputStyle} resize:vertical;" placeholder="Qui alertes-tu en premier ? Comment documentes-tu le bug ?" onfocus={focus} onblur={blur}></textarea>
 					</div>
 
 					<div>
 						<label for="cas3" style={labelStyle}>Un joueur se plaint d'une décision d'un autre staff, comment tu gères ? *</label>
-						<textarea id="cas3" name="cas3" required bind:value={form.cas3} rows="3" style="{inputStyle} resize:vertical;" onfocus={focus} onblur={blur}></textarea>
+						<textarea id="cas3" name="cas3" required bind:value={form.cas3} rows="3" style="{inputStyle} resize:vertical;" placeholder="Comment restes-tu neutre et impartial dans cette situation ?" onfocus={focus} onblur={blur}></textarea>
 					</div>
 				</div>
 
