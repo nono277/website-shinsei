@@ -22,5 +22,5 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		prompt:        'select_account',
 	});
 
-	throw redirect(302, `https://login.live.com/oauth20_authorize.srf?${params}`);
+	throw redirect(302, `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?${params}`);
 };

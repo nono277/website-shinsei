@@ -13,9 +13,21 @@
 	import ingameImg   from '$lib/img/background/bg2.png';
 	import logoImg     from '$lib/img/logo/logo.png';
 
+	import type { OnlinePlayer } from './api/stats/+server';
+
+	const GRADE_CONFIG: Record<string, { label: string; color: string }> = {
+		eveille:      { label: 'Éveillé',      color: '#22c55e' },
+		briseur:      { label: 'Briseur',      color: '#3b82f6' },
+		fleau:        { label: 'Fléau',         color: '#f59e0b' },
+		transcendant: { label: 'Transcendant', color: '#a855f7' },
+		souverain:    { label: 'Souverain',    color: '#f59e0b' },
+		abyssal:      { label: 'Abyssal',      color: '#ef4444' },
+	};
+
 	let heroVisible = $state(false);
 	let statValues  = $state([0, 0, 0, 0]);
 	let statTargets = [0, 0, 0, 0];
+	let onlinePlayers = $state<OnlinePlayer[]>([]);
 	const statLabels  = ['Joueurs connectés', 'Éveillés actifs', 'Donjons complétés', 'Failles fermées'];
 
 	async function fetchStats() {
@@ -23,7 +35,8 @@
 			const res = await fetch('/api/stats');
 			if (res.ok) {
 				const data = await res.json();
-				statTargets = [data.online ?? 0, data.eveilles ?? 0, data.donjons ?? 0, data.failles ?? 0];
+				statTargets  = [data.online ?? 0, data.eveilles ?? 0, data.donjons ?? 0, data.failles ?? 0];
+				onlinePlayers = data.players ?? [];
 				animateStats();
 			}
 		} catch {}
@@ -182,6 +195,58 @@
 </section>
 
 <!-- ══════════════════════════════════════════════════════════
+     JOUEURS EN LIGNE
+══════════════════════════════════════════════════════════ -->
+{#if onlinePlayers.length > 0}
+<section use:reveal={{ y: 20, duration: 700 }} style="padding:3.5rem 1.5rem;background:#0a0a0f;border-top:1px solid #1e1530;">
+	<div style="max-width:72rem;margin:0 auto;">
+		<div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
+			<div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:pulse 2s infinite;flex-shrink:0;"></div>
+			<p class="label-mono" style="color:#64748b;font-size:0.7rem;">JOUEURS CONNECTÉS</p>
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:#22c55e;margin-left:auto;">{onlinePlayers.length} EN LIGNE</span>
+		</div>
+
+		<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.875rem;">
+			{#each onlinePlayers as player}
+				{@const grade = GRADE_CONFIG[player.grade?.toLowerCase()] ?? GRADE_CONFIG['eveille']}
+				<div style="
+					display:flex;flex-direction:column;align-items:center;gap:0.625rem;
+					padding:1rem 0.75rem;
+					background:#0d0d15;border:1px solid #1e1530;border-radius:0.75rem;
+					transition:border-color 0.2s,box-shadow 0.2s;
+				"
+					onmouseenter={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.borderColor=grade.color+'60'; el.style.boxShadow=`0 0 16px ${grade.color}20`; }}
+					onmouseleave={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.borderColor='#1e1530'; el.style.boxShadow='none'; }}
+				>
+					<!-- Avatar Minecraft -->
+					<div style="position:relative;">
+						<img
+							src="https://mc-heads.net/avatar/{player.username}/52"
+							alt={player.username}
+							width="52" height="52"
+							style="border-radius:0.375rem;image-rendering:pixelated;"
+							onerror={(e)=>{ const img = e.currentTarget as HTMLImageElement; if (!img.dataset.tried) { img.dataset.tried='1'; img.src=`https://crafatar.com/avatars/${player.uuid}?size=52&overlay`; } }}
+						/>
+						<div style="position:absolute;bottom:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#22c55e;border:2px solid #0d0d15;box-shadow:0 0 6px #22c55e;"></div>
+					</div>
+
+					<!-- Nom -->
+					<span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.9rem;color:white;text-align:center;word-break:break-all;">{player.username}</span>
+
+					<!-- Grade -->
+					<span style="
+						font-family:'Share Tech Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;
+						padding:0.2rem 0.5rem;border-radius:0.25rem;
+						background:{grade.color}18;color:{grade.color};border:1px solid {grade.color}40;
+					">{grade.label.toUpperCase()}</span>
+				</div>
+			{/each}
+		</div>
+	</div>
+</section>
+{/if}
+
+<!-- ══════════════════════════════════════════════════════════
      CLASSES
 ══════════════════════════════════════════════════════════ -->
 <section id="classes" use:reveal={{ y: 30, duration: 800 }} style="padding:6rem 1.5rem;background:#0a0a0f;">
@@ -328,6 +393,66 @@
 				onmouseleave={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.background='transparent'; el.style.boxShadow='none'; }}>
 				VOIR LA CARTE COMPLÈTE →
 			</a>
+		</div>
+	</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     STAFF
+══════════════════════════════════════════════════════════ -->
+<section use:reveal={{ y: 30, duration: 800 }} style="padding:6rem 1.5rem;background:#0a0a0f;border-top:1px solid #1e1530;">
+	<div style="max-width:72rem;margin:0 auto;">
+		<div style="text-align:center;margin-bottom:3rem;">
+			<p style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:#7c3aed;letter-spacing:0.2em;margin-bottom:0.4rem;">ÉQUIPE FONDATRICE</p>
+			<h2 style="font-family:'Rajdhani',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;margin:0;">
+				LES BÂTISSEURS DE SHINSEI
+			</h2>
+		</div>
+
+		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1.5rem;max-width:700px;margin:0 auto;" class="sm:grid-cols-2">
+			{#each [
+				{ username: 'NoPleyZz', role: 'Fondateur',    color: '#f59e0b', badge: 'FOUNDER',    desc: "Créateur de l'univers SHINSEI. Architecte du lore, du système de classes et de la vision RPG du serveur." },
+				{ username: 'Avinc',    role: 'Co-fondateur · Marketing', color: '#7c3aed', badge: 'CO-FOUNDER', desc: "Co-créateur du serveur et responsable marketing. Gestion de la communauté, réseaux sociaux et communication officielle de SHINSEI." },
+			] as member}
+				<div style="
+					background:#0f0f1a;border:1px solid {member.color}30;border-radius:1rem;
+					padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1.25rem;
+					text-align:center;transition:border-color 0.25s,box-shadow 0.25s;
+				"
+					onmouseenter={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.borderColor=member.color+'70'; el.style.boxShadow=`0 0 30px ${member.color}18`; }}
+					onmouseleave={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.borderColor=member.color+'30'; el.style.boxShadow='none'; }}
+				>
+					<!-- Tête de skin -->
+					<div style="position:relative;">
+						<div style="
+							width:96px;height:96px;border-radius:1rem;overflow:hidden;
+							border:3px solid {member.color}60;
+							box-shadow:0 0 24px {member.color}35;
+							background:#06060f;
+						">
+							<img
+								src="https://mc-heads.net/avatar/{member.username}/96"
+								alt={member.username}
+								style="width:100%;height:100%;image-rendering:pixelated;"
+								onerror={(e)=>{ const img=e.currentTarget as HTMLImageElement; if(!img.dataset.tried){img.dataset.tried='1';img.src=`https://crafatar.com/avatars/${member.username}?size=96&overlay`;} }}
+							/>
+						</div>
+						<!-- Badge rôle -->
+						<div style="
+							position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+							font-family:'Share Tech Mono',monospace;font-size:0.55rem;font-weight:700;
+							padding:0.2rem 0.6rem;border-radius:9999px;white-space:nowrap;
+							background:{member.color};color:#000;letter-spacing:0.08em;
+						">{member.badge}</div>
+					</div>
+
+					<div style="padding-top:0.5rem;">
+						<p style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:900;color:white;margin:0 0 0.2rem;">{member.username}</p>
+						<p style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:{member.color};letter-spacing:0.1em;margin:0 0 0.85rem;">{member.role.toUpperCase()}</p>
+						<p style="font-size:0.85rem;color:#64748b;line-height:1.6;">{member.desc}</p>
+					</div>
+				</div>
+			{/each}
 		</div>
 	</div>
 </section>

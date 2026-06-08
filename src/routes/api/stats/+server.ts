@@ -1,33 +1,56 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 
+export interface OnlinePlayer {
+	username: string;
+	uuid: string;
+	grade: string; // 'eveille' | 'briseur' | 'fleau' | 'transcendant' | 'souverain' | 'abyssal'
+}
+
+const GRADE_ORDER = ['dormant', 'eveille', 'briseur', 'fleau', 'transcendant', 'souverain', 'abyssal'];
+
 export const GET: RequestHandler = async () => {
-	let online = 0;
+	let online   = 0;
 	let eveilles = 0;
-	let donjons = 0;
-	let failles = 0;
+	let donjons  = 0;
+	let failles  = 0;
+	let serverOnline = false;
+	let players: OnlinePlayer[] = [];
 
-	try {
-		const mcRes = await fetch('https://api.mcsrvstat.us/2/play.playshinsei.fr', {
-			signal: AbortSignal.timeout(5000)
-		});
-		if (mcRes.ok) {
-			const mc = await mcRes.json();
-			online = mc.players?.online ?? 0;
-		}
-	} catch {}
-
+	// Stats globales depuis le backend Shinsei (source de vérité)
 	try {
 		const statsRes = await fetch('http://play.playshinsei.fr:8080/stats', {
 			signal: AbortSignal.timeout(5000)
 		});
 		if (statsRes.ok) {
 			const stats = await statsRes.json();
-			eveilles = stats.eveilles ?? 0;
-			donjons = stats.donjons ?? 0;
-			failles = stats.failles ?? 0;
+			online       = stats.players  ?? 0;
+			eveilles     = stats.eveilles ?? 0;
+			donjons      = stats.donjons  ?? 0;
+			failles      = stats.failles  ?? 0;
+			serverOnline = true;
 		}
 	} catch {}
 
-	return json({ online, eveilles, donjons, failles });
+	// Liste des joueurs en ligne depuis le leaderboard (filtre online uniquement si /players/online absent)
+	try {
+		const playersRes = await fetch('http://play.playshinsei.fr:8080/players/online', {
+			signal: AbortSignal.timeout(3000)
+		});
+		if (playersRes.ok) {
+			const raw: OnlinePlayer[] = await playersRes.json();
+			players = raw.filter(p =>
+				GRADE_ORDER.indexOf(p.grade?.toLowerCase()) >= GRADE_ORDER.indexOf('eveille')
+			);
+		}
+	} catch {}
+
+	return json({
+		status: serverOnline ? 'online' : 'offline',
+		online,
+		eveilles,
+		donjons,
+		failles,
+		players,
+	});
 };

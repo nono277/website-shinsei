@@ -19,6 +19,7 @@ declare global {
 				capeUrl?: string;
 				skinVariant?: string;
 			} | null;
+			profile?: import('./routes/profil/+page.server').PlayerProfile | null;
 		}
 	}
 }

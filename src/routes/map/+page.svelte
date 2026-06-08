@@ -1,72 +1,108 @@
 <script lang="ts">
-	import WorldMap from '$lib/components/WorldMap.svelte';
-	import { mapMarkers } from '$lib/data/map';
+	let loaded = $state(false);
+	let error  = $state(false);
 
-	const safeCount = mapMarkers.filter(m => m.type === 'safe').length;
-	const riftCount = mapMarkers.filter(m => m.type === 'rift').length;
+	const DYNMAP_URL = 'http://play.playshinsei.fr:8123';
 </script>
 
-<svelte:head><title>Carte des Failles — SHINSEI 新世</title></svelte:head>
+<svelte:head>
+	<title>Carte — SHINSEI 新世</title>
+</svelte:head>
 
-<div style="position:relative;height:calc(100vh - 60px);background:#050508;overflow:hidden;">
+<div style="position: relative; height: calc(100vh - 60px); background: #050508; overflow: hidden;">
+
+	<!-- Iframe Dynmap -->
+	<iframe
+		src={DYNMAP_URL}
+		title="Carte Dynmap SHINSEI"
+		style="
+			width: 100%; height: 100%; border: none; display: block;
+			opacity: {loaded ? 1 : 0}; transition: opacity 0.4s;
+		"
+		onload={() => loaded = true}
+		onerror={() => error = true}
+	></iframe>
+
+	<!-- Chargement -->
+	{#if !loaded && !error}
+		<div style="
+			position: absolute; inset: 0; display: flex; flex-direction: column;
+			align-items: center; justify-content: center; gap: 1rem;
+			background: #050508;
+		">
+			<div style="
+				width: 40px; height: 40px; border-radius: 50%;
+				border: 3px solid #1e1530; border-top-color: #7c3aed;
+				animation: spin 0.8s linear infinite;
+			"></div>
+			<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; color: #475569; letter-spacing: 0.1em;">CHARGEMENT DE LA CARTE…</p>
+		</div>
+	{/if}
+
+	<!-- Erreur / serveur hors ligne -->
+	{#if error}
+		<div style="
+			position: absolute; inset: 0; display: flex; flex-direction: column;
+			align-items: center; justify-content: center; gap: 0.75rem;
+			background: #050508;
+		">
+			<p style="font-size: 2.5rem;">🌀</p>
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 1.1rem; font-weight: 700; color: #475569; letter-spacing: 0.06em;">CARTE INDISPONIBLE</p>
+			<p style="font-size: 0.8rem; color: #334155;">Le serveur Dynmap est hors ligne.</p>
+			<a href={DYNMAP_URL} target="_blank" rel="noopener noreferrer" style="
+				font-family:'Share Tech Mono',monospace; font-size: 0.7rem;
+				color: #7c3aed; border-bottom: 1px solid #7c3aed40; padding-bottom: 1px;
+			">Ouvrir directement →</a>
+		</div>
+	{/if}
 
 	<!-- Titre flottant -->
-	<div style="
-		position:absolute;top:1rem;left:50%;transform:translateX(-50%);
-		z-index:30;text-align:center;pointer-events:none;white-space:nowrap;
-	">
-		<h1 style="font-family:'Rajdhani',sans-serif;font-size:clamp(0.9rem,2vw,1.2rem);font-weight:900;color:white;letter-spacing:0.15em;text-shadow:0 0 18px #7c3aed60;">
-			CARTE DES FAILLES — MONDE SHINSEI
-		</h1>
-		<p style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:#4b5563;margin-top:0.2rem;">
-			<span style="color:#ef4444;">{riftCount} failles actives</span>
-			<span style="margin:0 0.5rem;color:#374151;">·</span>
-			<span style="color:#22c55e;">{safeCount} zones sécurisées</span>
-		</p>
-	</div>
-
-	<!-- Carte plein écran -->
-	<WorldMap interactive={true} />
-
-	<!-- Légende bas-gauche -->
-	<div style="
-		position:absolute;bottom:1.25rem;left:1.25rem;z-index:30;
-		background:rgba(13,13,21,0.92);border:1px solid #1e1530;
-		border-radius:0.625rem;padding:0.75rem 1rem;
-		backdrop-filter:blur(8px);
-	">
-		<p style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#475569;margin-bottom:0.6rem;">Légende</p>
-		<div style="display:flex;flex-direction:column;gap:0.4rem;">
-			<div style="display:flex;align-items:center;gap:0.5rem;">
-				<span style="width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;flex-shrink:0;"></span>
-				<span style="font-size:0.75rem;color:#94a3b8;">Zone sécurisée</span>
+	{#if loaded}
+		<div style="
+			position: absolute; top: 1rem; left: 50%; transform: translateX(-50%);
+			z-index: 10; text-align: center; pointer-events: none; white-space: nowrap;
+		">
+			<div style="
+				background: rgba(13,13,21,0.85); border: 1px solid #1e1530;
+				border-radius: 0.5rem; padding: 0.4rem 1rem;
+				backdrop-filter: blur(8px);
+			">
+				<h1 style="font-family:'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 900; color: white; letter-spacing: 0.15em; margin: 0;">
+					CARTE EN DIRECT — SHINSEI
+				</h1>
 			</div>
-			<div style="display:flex;align-items:center;gap:0.5rem;">
-				<span style="width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444;flex-shrink:0;"></span>
-				<span style="font-size:0.75rem;color:#94a3b8;">Faille active</span>
-			</div>
-			<div style="height:1px;background:#1e1530;margin:0.3rem 0;"></div>
-			{#each [['#fbbf24', "L'Ordre"],['#ef4444','Les Fracturés'],['#22c55e','Les Nomades']] as [c,label]}
-				<div style="display:flex;align-items:center;gap:0.5rem;">
-					<span style="width:10px;height:10px;border-radius:2px;border:1px solid {c}60;background:{c}10;flex-shrink:0;"></span>
-					<span style="font-size:0.75rem;color:#94a3b8;">{label}</span>
-				</div>
-			{/each}
 		</div>
-	</div>
 
-	<!-- Aide contrôles (desktop) -->
-	<div style="
-		position:absolute;top:1rem;right:1rem;z-index:30;
-		background:rgba(13,13,21,0.85);border:1px solid #1e1530;
-		border-radius:0.5rem;padding:0.6rem 0.85rem;
-		backdrop-filter:blur(8px);
-		display:none;
-	" class="md:block">
-		<p style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:#475569;line-height:1.8;">
-			🖱 Clic → Détails<br/>
-			⚙ Scroll → Zoom<br/>
-			✥ Glisser → Déplacer
-		</p>
-	</div>
+		<!-- Lien ouvrir dans un onglet -->
+		<a
+			href={DYNMAP_URL}
+			target="_blank"
+			rel="noopener noreferrer"
+			style="
+				position: absolute; bottom: 1.25rem; right: 1.25rem; z-index: 10;
+				display: flex; align-items: center; gap: 0.4rem;
+				background: rgba(13,13,21,0.85); border: 1px solid #1e1530;
+				border-radius: 0.5rem; padding: 0.5rem 0.85rem;
+				backdrop-filter: blur(8px); text-decoration: none;
+				font-family:'Share Tech Mono',monospace; font-size: 0.65rem;
+				color: #7c3aed; letter-spacing: 0.08em;
+				transition: border-color 0.2s;
+			"
+			onmouseenter={(e) => (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed50'}
+			onmouseleave={(e) => (e.currentTarget as HTMLElement).style.borderColor = '#1e1530'}
+		>
+			<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+				<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+				<polyline points="15 3 21 3 21 9"/>
+				<line x1="10" y1="14" x2="21" y2="3"/>
+			</svg>
+			PLEIN ÉCRAN
+		</a>
+	{/if}
 </div>
+
+<style>
+	@keyframes spin {
+		to { transform: rotate(360deg); }
+	}
+</style>

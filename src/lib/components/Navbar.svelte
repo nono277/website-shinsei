@@ -11,12 +11,12 @@
 	let user = $derived(page.data.user as { uuid: string; username: string } | null | undefined);
 
 	const links = [
-		{ href: '/',           label: 'Accueil'    },
-		{ href: '/#classes',   label: 'Classes'    },
-		{ href: '/boutique',   label: 'Boutique'   },
-		{ href: '/classement', label: 'Classement' },
-		{ href: '/wiki',       label: 'Wiki'        },
-		{ href: '/map',        label: 'Carte'      },
+		{ href: '/',            label: 'Accueil'    },
+		{ href: '/#classes',    label: 'Classes'    },
+		{ href: '/classement',  label: 'Classement' },
+		{ href: '/wiki',        label: 'Wiki'        },
+		{ href: '/map',         label: 'Carte'      },
+		{ href: '/recrutement', label: 'Recrutement' },
 	];
 
 	function isActive(href: string): boolean {
@@ -80,7 +80,7 @@
 	<!-- Auth zone desktop -->
 	<div style="align-items: center; gap: 0.75rem;" class="hidden md:flex">
 		{#if user}
-			<!-- Logged in: avatar + profil link -->
+			<!-- Logged in: avatar + profil link + logout -->
 			<a
 				href="/profil"
 				style="
@@ -100,14 +100,40 @@
 			>
 				<div style="width: 26px; height: 26px; border-radius: 50%; overflow: hidden; border: 1px solid #7c3aed40; background: #0d0d15; flex-shrink: 0;">
 					<img
-						src={`https://crafatar.com/avatars/${user.uuid}?size=32&overlay`}
+						src={`https://mc-heads.net/avatar/${user.username}/32`}
 						alt={user.username}
 						style="width: 100%; height: 100%; image-rendering: pixelated;"
-						onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+						onerror={(e) => {
+							const img = e.currentTarget as HTMLImageElement;
+							if (!img.dataset.tried) {
+								img.dataset.tried = '1';
+								img.src = `https://crafatar.com/avatars/${user.uuid}?size=32&overlay`;
+							}
+						}}
 					/>
 				</div>
 				<span style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.04em;">{user.username}</span>
 			</a>
+			<form method="POST" action="/api/auth/logout" style="margin: 0;">
+				<button
+					type="submit"
+					title="Se déconnecter"
+					style="
+						display: flex; align-items: center; justify-content: center;
+						width: 34px; height: 34px; border-radius: 50%;
+						background: transparent; border: 1px solid #1e1530; color: #475569;
+						cursor: pointer; transition: all 0.18s;
+					"
+					onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef444440'; (e.currentTarget as HTMLElement).style.color = '#f87171'; (e.currentTarget as HTMLElement).style.background = '#ef444410'; }}
+					onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#1e1530'; (e.currentTarget as HTMLElement).style.color = '#475569'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+				>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+						<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+						<polyline points="16 17 21 12 16 7"/>
+						<line x1="21" y1="12" x2="9" y2="12"/>
+					</svg>
+				</button>
+			</form>
 		{:else}
 			<!-- Not logged in: connexion + jouer -->
 			<a href="/connexion" style="
@@ -184,7 +210,18 @@
 					"
 				>
 					<div style="width: 32px; height: 32px; border-radius: 0.375rem; overflow: hidden; border: 1px solid #7c3aed40; background: #0d0d15; flex-shrink: 0;">
-						<img src={`https://crafatar.com/avatars/${user.uuid}?size=32&overlay`} alt={user.username} style="width: 100%; height: 100%; image-rendering: pixelated;" onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+						<img
+					src={`https://mc-heads.net/avatar/${user.username}/32`}
+					alt={user.username}
+					style="width: 100%; height: 100%; image-rendering: pixelated;"
+					onerror={(e) => {
+						const img = e.currentTarget as HTMLImageElement;
+						if (!img.dataset.tried) {
+							img.dataset.tried = '1';
+							img.src = `https://crafatar.com/avatars/${user.uuid}?size=32&overlay`;
+						}
+					}}
+				/>
 					</div>
 					<div>
 						<p style="font-family:'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 700; color: white;">{user.username}</p>

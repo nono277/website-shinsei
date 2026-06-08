@@ -1,19 +1,20 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 
-	interface Stats { players: number; status: 'online' | 'offline'; }
+	interface Stats { online: number; status: 'online' | 'offline'; }
 
-	let stats   = $state<Stats>({ players: 247, status: 'online' });
+	let stats   = $state<Stats>({ online: 0, status: 'offline' });
 	let loaded  = $state(false);
 	let interval: ReturnType<typeof setInterval>;
 
 	async function fetchStats() {
 		try {
 			const res = await fetch('/api/stats');
-			stats  = await res.json();
+			const data = await res.json();
+			stats  = { online: data.online ?? 0, status: data.status ?? 'offline' };
 			loaded = true;
 		} catch {
-			stats  = { players: 247, status: 'online' };
+			stats  = { online: 0, status: 'offline' };
 			loaded = true;
 		}
 	}
@@ -60,7 +61,7 @@
 	{#if loaded}
 		<div style="width: 1px; height: 14px; background: #1e1530;"></div>
 		<span style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #64748b;">
-			<strong style="color: #e2e8f0;">{stats.players}</strong> joueurs
+			<strong style="color: #e2e8f0;">{stats.online}</strong> joueurs
 		</span>
 	{/if}
 </div>

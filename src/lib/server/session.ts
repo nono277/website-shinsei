@@ -8,7 +8,30 @@ interface SessionData {
 	expiresAt: number;
 }
 
-const sessions = new Map<string, SessionData>();
+export interface PartialAuth {
+	gamertag: string;
+	expiresAt: number;
+}
+
+const sessions     = new Map<string, SessionData>();
+const partialAuths = new Map<string, PartialAuth>();
+
+export function createPartialAuth(gamertag: string): string {
+	const id = crypto.randomUUID();
+	partialAuths.set(id, { gamertag, expiresAt: Date.now() + 15 * 60 * 1000 });
+	return id;
+}
+
+export function getPartialAuth(id: string): PartialAuth | null {
+	const p = partialAuths.get(id);
+	if (!p) return null;
+	if (Date.now() > p.expiresAt) { partialAuths.delete(id); return null; }
+	return p;
+}
+
+export function deletePartialAuth(id: string): void {
+	partialAuths.delete(id);
+}
 
 export function createSession(data: Omit<SessionData, 'expiresAt'>): string {
 	const id = crypto.randomUUID();

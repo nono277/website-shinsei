@@ -63,7 +63,7 @@
 				<div>
 					<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;">Navigation</p>
 					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
-						{#each [['/', 'Accueil'], ['/telecharger', 'Télécharger'], ['/boutique', 'Boutique'], ['/classement', 'Classement'], ['/wiki', 'Wiki'], ['/map', 'Carte']] as [href, label]}
+						{#each [['/', 'Accueil'], ['/telecharger', 'Télécharger'], ['/classement', 'Classement'], ['/wiki', 'Wiki'], ['/map', 'Carte'], ['/recrutement', 'Recrutement']] as [href, label]}
 							<a {href} style="font-size: 0.875rem; color: #64748b; transition: color 0.2s;"
 								onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#7c3aed'}
 								onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#64748b'}>
@@ -95,12 +95,21 @@
 
 			<div style="height: 1px; background: #1e1530; margin-bottom: 1.5rem;"></div>
 
-			<div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;" class="md:flex-row md:justify-between">
+			<div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;" class="md:flex-row md:justify-between">
 				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #374151;">
 					© 2026 SHINSEI 新世 — Tous droits réservés
 				</p>
-				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #1f2937;">
-					Non affilié à Mojang Studios · Minecraft est une marque déposée de Microsoft
+				<div style="display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; justify-content: center;">
+					{#each [['/mentions-legales','Mentions légales'],['/politique-de-confidentialite','Confidentialité'],['/cgu','CGU']] as [href, label]}
+						<a {href} style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151; text-decoration: none; transition: color 0.2s;"
+							onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#7c3aed'}
+							onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#374151'}>
+							{label}
+						</a>
+					{/each}
+				</div>
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #1f2937; text-align: center;">
+					Non affilié à Mojang · Minecraft™ Microsoft
 				</p>
 			</div>
 		</div>

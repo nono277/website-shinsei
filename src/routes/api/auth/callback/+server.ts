@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
-import { MICROSOFT_CLIENT_ID } from '$env/static/private';
-import { createSession } from '$lib/server/session';
+import { MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET } from '$env/static/private';
+import { createSession, createPartialAuth } from '$lib/server/session';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
@@ -22,14 +22,15 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	try {
 		// 1. Exchange code for Microsoft access token via live.com
-		const tokenRes = await fetch('https://login.live.com/oauth20_token.srf', {
+		const tokenRes = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: new URLSearchParams({
-				client_id:    MICROSOFT_CLIENT_ID,
-				grant_type:   'authorization_code',
+				client_id:     MICROSOFT_CLIENT_ID,
+				client_secret: MICROSOFT_CLIENT_SECRET,
+				grant_type:    'authorization_code',
 				code,
-				redirect_uri: redirectUri,
+				redirect_uri:  redirectUri,
 			}),
 		});
 		const tokenData = await tokenRes.json();
@@ -55,13 +56,13 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		const xblToken: string = xblData.Token;
 		const userHash: string = xblData.DisplayClaims.xui[0].uhs;
 
-		// 3. XSTS token
+		// 3. XSTS token (pour Xbox API)
 		const xstsRes = await fetch('https://xsts.auth.xboxlive.com/xsts/authorize', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 			body: JSON.stringify({
 				Properties:   { SandboxId: 'RETAIL', UserTokens: [xblToken] },
-				RelyingParty: 'rp://api.minecraftservices.com/',
+				RelyingParty: 'http://xboxlive.com',
 				TokenType:    'JWT',
 			}),
 		});
@@ -73,37 +74,57 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		}
 		const xstsToken: string = xstsData.Token;
 
-		// 4. Minecraft authentication
-		const mcRes = await fetch(
-			'https://api.minecraftservices.com/authentication/login_with_xbox',
+		// 4. Récupérer le gamertag Xbox
+		const xboxProfileRes = await fetch(
+			'https://profile.xboxlive.com/users/me/profile/settings?settings=Gamertag,UniqueModernGamertag',
 			{
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ identityToken: `XBL3.0 x=${userHash};${xstsToken}` }),
+				headers: {
+					Authorization:            `XBL3.0 x=${userHash};${xstsToken}`,
+					'x-xbl-contract-version': '2',
+					Accept:                   'application/json',
+					'Accept-Language':        'en-US',
+				},
 			}
 		);
-		const mcData = await mcRes.json();
-		if (!mcRes.ok) throw new Error(`Minecraft auth failed: ${JSON.stringify(mcData)}`);
-		const mcToken: string = mcData.access_token;
+		if (!xboxProfileRes.ok) throw new Error(`Xbox profile failed: ${xboxProfileRes.status}`);
+		const xboxProfileData = await xboxProfileRes.json();
+		const settings: { id: string; value: string }[] =
+			xboxProfileData.profileUsers?.[0]?.settings ?? [];
+		const gamertag: string | undefined = settings.find(s => s.id === 'Gamertag')?.value;
+		const modernGamertag: string | undefined = settings.find(s => s.id === 'UniqueModernGamertag')?.value;
+		console.log('[Auth] Gamertag:', gamertag, '| ModernGamertag:', modernGamertag);
+		if (!gamertag) throw new Error('Could not get Xbox gamertag');
 
-		// 5. Get Minecraft profile
-		const profileRes = await fetch('https://api.minecraftservices.com/minecraft/profile', {
-			headers: { Authorization: `Bearer ${mcToken}` },
-		});
-		if (profileRes.status === 404) throw redirect(302, '/connexion?error=no_minecraft');
-		if (!profileRes.ok) throw new Error('Profile fetch failed');
-		const profile = await profileRes.json();
+		// Le gamertag moderne peut contenir un suffixe #1234 — on essaie la partie avant #
+		const gamertagBase = gamertag.replace(/#\d+$/, '').trim();
 
-		const activeSkin = profile.skins?.find((s: { state: string }) => s.state === 'ACTIVE');
-		const activeCape = profile.capes?.find((c: { state: string }) => c.state === 'ACTIVE');
+		// 5. Vérifier la licence Minecraft via API Mojang publique
+		// On essaie : gamertag exact → base sans suffixe
+		let mojangProfile: { id: string; name: string } | null = null;
+		for (const name of [...new Set([gamertag, gamertagBase])]) {
+			const r = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`);
+			console.log('[Auth] Mojang lookup', name, '→', r.status);
+			if (r.ok) { mojangProfile = await r.json(); break; }
+		}
+		if (!mojangProfile) {
+			// Gamertag ≠ username Minecraft → page de liaison manuelle
+			const partialId = createPartialAuth(gamertag);
+			cookies.set('partial_auth', partialId, {
+				path: '/', httpOnly: true,
+				secure: url.protocol === 'https:',
+				sameSite: 'lax', maxAge: 900,
+			});
+			throw redirect(302, '/connexion/lier');
+		}
 
+		console.log('[Auth] Minecraft profile:', mojangProfile);
 		const sessionId = createSession({
-			minecraftToken: mcToken,
-			uuid:           profile.id,
-			username:       profile.name,
-			skinUrl:        activeSkin?.url,
-			capeUrl:        activeCape?.url,
-			skinVariant:    activeSkin?.variant?.toLowerCase() ?? 'classic',
+			minecraftToken: '',
+			uuid:           mojangProfile.id,
+			username:       mojangProfile.name,
+			skinUrl:        `https://crafatar.com/avatars/${mojangProfile.id}?overlay=true`,
+			capeUrl:        undefined,
+			skinVariant:    'classic',
 		});
 
 		cookies.set('shinsei_session', sessionId, {

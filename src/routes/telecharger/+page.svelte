@@ -59,7 +59,7 @@
 			Le launcher officiel SHINSEI installe automatiquement Minecraft 1.20.1, Forge et toutes les ressources nécessaires.
 		</p>
 
-		<a href="#download" style="
+		<a href="http://cdn.playshinsei.fr/launcher/shinsei-setup.exe" download style="
 			display:flex; align-items:center; gap:0.75rem;
 			padding:1rem 2.5rem;
 			font-family:'Rajdhani',sans-serif; font-weight:900; font-size:1.1rem; letter-spacing:0.12em;
