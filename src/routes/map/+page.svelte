@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { PUBLIC_DYNMAP_URL } from '$env/static/public';
+	import { PUBLIC_BLUEMAP_URL } from '$env/static/public';
 
 	let loaded = $state(false);
 	let error  = $state(false);
@@ -10,7 +10,7 @@
 
 	onMount(() => {
 		// Iframe HTTP bloqué par le navigateur dans un contexte HTTPS
-		if (window.location.protocol === 'https:' && PUBLIC_DYNMAP_URL.startsWith('http:')) {
+		if (window.location.protocol === 'https:' && PUBLIC_BLUEMAP_URL.startsWith('http:')) {
 			mixedContent = true;
 			return;
 		}
@@ -28,11 +28,11 @@
 
 <div style="position: relative; height: calc(100vh - 60px); background: #050508; overflow: hidden;">
 
-	<!-- Iframe Dynmap (uniquement si pas de mixed content) -->
+	<!-- Iframe Bluemap (uniquement si pas de mixed content) -->
 	{#if !mixedContent}
 		<iframe
-			src={PUBLIC_DYNMAP_URL}
-			title="Carte Dynmap SHINSEI"
+			src={PUBLIC_BLUEMAP_URL}
+			title="Carte Bluemap SHINSEI"
 			style="
 				width: 100%; height: 100%; border: none; display: block;
 				opacity: {loaded ? 1 : 0}; transition: opacity 0.4s;
@@ -70,7 +70,7 @@
 			<p style="font-size: 0.8rem; color: #475569; text-align: center; max-width: 360px; line-height: 1.6;">
 				La carte ne peut pas être intégrée ici pour des raisons de sécurité.<br>Ouvre-la dans un nouvel onglet.
 			</p>
-			<a href={PUBLIC_DYNMAP_URL} target="_blank" rel="noopener noreferrer" style="
+			<a href={PUBLIC_BLUEMAP_URL} target="_blank" rel="noopener noreferrer" style="
 				margin-top: 0.5rem;
 				display: flex; align-items: center; gap: 0.5rem;
 				background: #7c3aed; color: white; text-decoration: none;
@@ -100,8 +100,8 @@
 		">
 			<p style="font-size: 2.5rem;">🌀</p>
 			<p style="font-family:'Rajdhani',sans-serif; font-size: 1.1rem; font-weight: 700; color: #475569; letter-spacing: 0.06em;">CARTE INDISPONIBLE</p>
-			<p style="font-size: 0.8rem; color: #334155;">Le serveur Dynmap est hors ligne.</p>
-			<a href={PUBLIC_DYNMAP_URL} target="_blank" rel="noopener noreferrer" style="
+			<p style="font-size: 0.8rem; color: #334155;">Le serveur Bluemap est hors ligne.</p>
+			<a href={PUBLIC_BLUEMAP_URL} target="_blank" rel="noopener noreferrer" style="
 				font-family:'Share Tech Mono',monospace; font-size: 0.7rem;
 				color: #7c3aed; border-bottom: 1px solid #7c3aed40; padding-bottom: 1px;
 			">Ouvrir directement →</a>
@@ -127,7 +127,7 @@
 
 		<!-- Lien ouvrir dans un onglet -->
 		<a
-			href={PUBLIC_DYNMAP_URL}
+			href={PUBLIC_BLUEMAP_URL}
 			target="_blank"
 			rel="noopener noreferrer"
 			style="
