@@ -14,6 +14,9 @@ export interface PlayerProfile {
 	uuid: string;
 	gradeShop: string;
 	gradeGameplay: string;
+	gradeColor: string | null;
+	level: number;
+	xpTotal: number;
 	faction: string;
 	classe: string;
 	playTime: number;
@@ -41,6 +44,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 					uuid:              raw.uuid     ?? locals.user.uuid,
 					gradeGameplay:     (raw.grade ?? raw.gradeGameplay ?? 'dormant').toLowerCase(),
 					gradeShop:         (raw.gradeBoutique ?? raw.gradeShop ?? '').toLowerCase() || null,
+					gradeColor:        raw.gradeColor ?? null,
+					level:             raw.level ?? 0,
+					xpTotal:           raw.xp ?? 0,
 					faction:           normalizeFaction(raw.faction ?? raw.faction ?? ''),
 					classe:            (raw.classe ?? '').toLowerCase() || null,
 					playTime:          raw.playTimeMinutes ?? raw.playTime ?? 0,

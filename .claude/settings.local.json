@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(curl -s \"http://play.playshinsei.fr:8080/player/nsellay277\")",
+      "Bash(curl -s \"http://play.playshinsei.fr:8080/stats\")"
     ]
   }
 }

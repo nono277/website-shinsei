@@ -32,7 +32,7 @@ export const GET: RequestHandler = async () => {
 		}
 	} catch {}
 
-	// Liste des joueurs en ligne depuis le leaderboard (filtre online uniquement si /players/online absent)
+	// Joueurs en ligne (pour la liste live)
 	try {
 		const playersRes = await fetch('http://play.playshinsei.fr:8080/players/online', {
 			signal: AbortSignal.timeout(3000)
@@ -42,6 +42,20 @@ export const GET: RequestHandler = async () => {
 			players = raw.filter(p =>
 				GRADE_ORDER.indexOf(p.grade?.toLowerCase()) >= GRADE_ORDER.indexOf('eveille')
 			);
+		}
+	} catch {}
+
+	// Compte total des Éveillés (online + offline) via le leaderboard
+	try {
+		const lbRes = await fetch('http://play.playshinsei.fr:8080/leaderboard', {
+			signal: AbortSignal.timeout(4000)
+		});
+		if (lbRes.ok) {
+			const raw: { grade?: string; gradeGameplay?: string }[] = await lbRes.json();
+			eveilles = raw.filter(p => {
+				const g = (p.grade ?? p.gradeGameplay ?? '').toLowerCase();
+				return GRADE_ORDER.indexOf(g) >= GRADE_ORDER.indexOf('eveille');
+			}).length;
 		}
 	} catch {}
 

@@ -83,7 +83,7 @@
 	const CLASS_MAP   = Object.fromEntries(classes.map(c => [c.id, c]));
 	const FACTION_MAP = Object.fromEntries(factions.map(f => [f.id, f]));
 
-	function rankColor(id: string):    string { return GAME_RANK[id?.toLowerCase()]?.color            ?? '#6b7280'; }
+	function rankColor(id: string):    string { return profile?.gradeColor ?? GAME_RANK[id?.toLowerCase()]?.color ?? '#6b7280'; }
 	function shopColor(id: string):    string { return SHOP_GRADE[id?.toLowerCase()]?.color           ?? '#7c3aed'; }
 	function classColor(id: string):   string { return CLASS_MAP[id?.toLowerCase()]?.color            ?? '#94a3b8'; }
 	function factionColor(id: string): string { return FACTION_MAP[id?.toLowerCase()]?.colors.primary ?? '#06b6d4'; }
@@ -105,11 +105,20 @@
 		return idx >= 0 && idx < gameRanks.length - 1 ? gameRanks[idx + 1].name : null;
 	});
 
+	function formatXP(xp: number): string {
+		if (!xp) return '—';
+		if (xp >= 1_000_000) return `${(xp / 1_000_000).toFixed(1)}M`;
+		if (xp >= 1_000)     return `${(xp / 1_000).toFixed(0)}K`;
+		return String(xp);
+	}
+
 	let stats = $derived([
-		{ label: 'Heures jouées',   value: profile ? formatPlayTime(profile.playTime)    : '—', icon: '⏱' },
-		{ label: 'Donjons',         value: profile ? String(profile.dungeonsCompleted)    : '—', icon: '⚔' },
+		{ label: 'Niveau',          value: profile ? String(profile.level ?? '—')         : '—', icon: '⭐' },
+		{ label: 'XP total',        value: profile ? formatXP(profile.xpTotal)             : '—', icon: '✨' },
+		{ label: 'Heures jouées',   value: profile ? formatPlayTime(profile.playTime)      : '—', icon: '⏱' },
+		{ label: 'Donjons',         value: profile ? String(profile.dungeonsCompleted)     : '—', icon: '⚔' },
 		{ label: 'Failles fermées', value: profile ? String(profile.faillesFermees ?? '—') : '—', icon: '🌀' },
-		{ label: 'PvP kills',       value: profile ? String(profile.pvpKills)             : '—', icon: '⚡' },
+		{ label: 'PvP kills',       value: profile ? String(profile.pvpKills)              : '—', icon: '⚡' },
 	]);
 </script>
 
@@ -206,6 +215,11 @@
 							{fl.toUpperCase()}
 						</span>
 					{/if}
+					{#if profile?.level}
+						<span style="font-family:'Rajdhani',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; padding:0.3rem 0.75rem; border-radius:9999px; background:#f59e0b18; border:1px solid #f59e0b50; color:#f59e0b;">
+							NV. {profile.level}
+						</span>
+					{/if}
 					<span style="font-family:'Rajdhani',sans-serif; font-size:0.75rem; font-weight:700; letter-spacing:0.08em; padding:0.3rem 0.75rem; border-radius:9999px; background:#13131e; border:1px solid #1e1530; color:#475569;">JAVA EDITION</span>
 				</div>
 
@@ -229,7 +243,7 @@
 				{/if}
 
 				<!-- Stats -->
-				<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.75rem;" class="stats-grid">
+				<div style="display:grid; grid-template-columns:repeat(6,1fr); gap:0.75rem;" class="stats-grid">
 					{#each stats as stat}
 						<div style="background:#13131e; border:1px solid #1e1530; border-radius:0.75rem; padding:0.85rem 1rem;">
 							<p style="font-size:0.75rem; color:#475569; margin-bottom:0.3rem;">{stat.icon} {stat.label}</p>
@@ -380,6 +394,6 @@
 	}
 	@media (max-width: 640px) {
 		.profile-grid, .skin-grid { grid-template-columns: 1fr; }
-		.stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+		.stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
 	}
 </style>
