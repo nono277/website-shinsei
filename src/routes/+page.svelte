@@ -71,7 +71,7 @@
 	<link rel="canonical" href="https://playshinsei.fr" />
 	<meta property="og:title" content="SHINSEI 新世 — Serveur Minecraft RPG Français" />
 	<meta property="og:url" content="https://playshinsei.fr" />
-	<script type="application/ld+json">{JSON.stringify({
+	{@html `<script type="application/ld+json">${JSON.stringify({
 		"@context": "https://schema.org",
 		"@type": "VideoGame",
 		"name": "SHINSEI 新世",
@@ -86,7 +86,7 @@
 			"name": "SHINSEI",
 			"url": "https://playshinsei.fr"
 		}
-	})}</script>
+	})}</script>`}
 </svelte:head>
 
 <!-- ══════════════════════════════════════════════════════════
