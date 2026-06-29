@@ -5,7 +5,9 @@
       "Bash(node -e ' *)",
       "Bash(curl -s \"http://play.playshinsei.fr:8080/player/nsellay277\")",
       "Bash(curl -s \"http://play.playshinsei.fr:8080/stats\")",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(pnpm run *)",
+      "Bash(npx svelte-check *)"
     ]
   }
 }

@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
-	import ClassCard    from '$lib/components/ClassCard.svelte';
 	import ServerStats  from '$lib/components/ServerStats.svelte';
 	import WorldMap     from '$lib/components/WorldMap.svelte';
-	import { classes }              from '$lib/data/classes';
+	import { classes }             from '$lib/data/classes';
 	import { factions, timeline }  from '$lib/data/lore';
 	import { reveal }              from '$lib/actions/reveal';
 
 	import bgImg       from '$lib/img/background/bg.png';
-	import iconClassImg from '$lib/img/icon class/iconclass.png';
 	import ingameImg   from '$lib/img/background/bg2.png';
 	import logoImg     from '$lib/img/logo/logo.png';
 
@@ -171,7 +169,7 @@
 					onmouseleave={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.boxShadow='0 0 22px #7c3aed60'; el.style.background='#7c3aed'; }}>
 					TÉLÉCHARGER LE LAUNCHER
 				</a>
-				<a href="#classes" style="
+				<a href="/classes" style="
 					font-family:'Rajdhani',sans-serif; font-weight:900; font-size:0.9rem;
 					letter-spacing:0.12em; padding:0.8rem 2rem;
 					color:#7c3aed; border:1px solid #7c3aed60; border-radius:0.375rem;
@@ -269,37 +267,6 @@
 {/if}
 
 <!-- ══════════════════════════════════════════════════════════
-     CLASSES
-══════════════════════════════════════════════════════════ -->
-<section id="classes" use:reveal={{ y: 30, duration: 800 }} style="padding:6rem 1.5rem;background:#0a0a0f;">
-	<div style="max-width:72rem;margin:0 auto;">
-		<div style="display:grid;grid-template-columns:1fr;gap:3rem;align-items:center;margin-bottom:3.5rem;" class="lg:grid-cols-2">
-			<div>
-				<p class="label-mono" style="color:#7c3aed;margin-bottom:0.5rem;">5 CLASSES UNIQUES</p>
-				<h2 style="font-family:'Rajdhani',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;margin-bottom:1rem;text-shadow:0 0 25px #7c3aed25;">
-					CHOISISSEZ VOTRE CLASSE
-				</h2>
-				<p style="color:#94a3b8;line-height:1.65;margin-bottom:1.25rem;">
-					Chaque classe définit votre style de combat, vos compétences uniques et votre rôle dans les failles. Du furtif Hunter au colossal Titan, une voie s'impose à vous.
-				</p>
-				<a href="/wiki" style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.875rem;color:#7c3aed;">
-					VOIR TOUTES LES COMPÉTENCES →
-				</a>
-			</div>
-			<div style="display:flex;justify-content:center;">
-				<img src={iconClassImg} alt="Les 5 classes SHINSEI" style="max-width:360px;width:100%;filter:drop-shadow(0 0 28px #7c3aed35);" />
-			</div>
-		</div>
-
-		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1rem;" class="md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-			{#each classes as cls}
-				<ClassCard name={cls.name} color={cls.color} description={cls.description} icon={cls.icon} tagline={cls.tagline} />
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
      LORE + SCREENSHOT
 ══════════════════════════════════════════════════════════ -->
 <section use:reveal={{ y: 30, duration: 800, delay: 50 }} style="padding:6rem 1.5rem;background:#0d0d15;border-top:1px solid #1e1530;">
@@ -338,6 +305,51 @@
 			<div style="position:absolute;bottom:0;left:0;right:0;padding:1rem;background:linear-gradient(to top,#0a0a0f,transparent);">
 				<p class="label-mono" style="color:#7c3aed70;">MONDE SHINSEI 新世 — EN JEU</p>
 			</div>
+		</div>
+	</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     CLASSES
+══════════════════════════════════════════════════════════ -->
+<section use:reveal={{ y: 30, duration: 800 }} style="padding:6rem 1.5rem;background:#0a0a0f;border-top:1px solid #1e1530;">
+	<div style="max-width:72rem;margin:0 auto;">
+		<div style="text-align:center;margin-bottom:3.5rem;">
+			<h2 style="font-family:'Rajdhani',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;margin-bottom:0.75rem;">
+				CHOISISSEZ VOTRE CLASSE
+			</h2>
+			<p class="label-mono" style="color:#64748b;">Un seul Abyssal SS peut exister par classe sur tout le serveur</p>
+		</div>
+
+		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1.25rem;" class="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+			{#each classes as cls}
+				<a
+					href="/classes?id={cls.id}"
+					style="
+						background:#0d0d15;
+						border:1px solid {cls.color}30;
+						border-radius:0.75rem;
+						padding:1.5rem;
+						display:flex;flex-direction:column;gap:0.75rem;
+						transition:border-color 0.25s,box-shadow 0.25s;
+						text-decoration:none;
+					"
+					onmouseenter={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.borderColor=cls.color+'80'; el.style.boxShadow=`0 15px 40px ${cls.color}15`; }}
+					onmouseleave={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.borderColor=cls.color+'30'; el.style.boxShadow='none'; }}
+				>
+					<span style="font-size:2.2rem;">{cls.icon}</span>
+					<div>
+						<h3 style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:900;color:{cls.color};margin-bottom:0.15rem;">{cls.name}</h3>
+						<p class="label-mono" style="color:{cls.color}80;">{cls.tagline}</p>
+					</div>
+					<p style="font-size:0.85rem;color:#94a3b8;line-height:1.55;flex:1;">
+						{cls.description}
+					</p>
+					<span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.75rem;color:{cls.color};">
+						VOIR LA CLASSE →
+					</span>
+				</a>
+			{/each}
 		</div>
 	</div>
 </section>
