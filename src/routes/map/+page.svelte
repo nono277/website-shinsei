@@ -9,9 +9,9 @@
 	const TIMEOUT_MS = 15_000;
 
 	onMount(() => {
-		// Iframe HTTP bloqué par le navigateur dans un contexte HTTPS
+		// Iframe HTTP bloqué par le navigateur dans un contexte HTTPS → redirection directe
 		if (window.location.protocol === 'https:' && PUBLIC_DYNMAP_URL.startsWith('http:')) {
-			mixedContent = true;
+			window.location.href = PUBLIC_DYNMAP_URL;
 			return;
 		}
 
