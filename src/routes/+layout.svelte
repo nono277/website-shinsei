@@ -63,7 +63,7 @@
 				<div>
 					<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;">Navigation</p>
 					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
-						{#each [['/', 'Accueil'], ['/telecharger', 'Télécharger'], ['/classement', 'Classement'], ['/wiki', 'Wiki'], ['/map', 'Carte'], ['/recrutement', 'Recrutement']] as [href, label]}
+						{#each [['/', 'Accueil'], ['/telecharger', 'Télécharger'], ['/classement', 'Classement'], ['/wiki', 'Wiki'], ['/map', 'Carte'], ['/recrutement', 'Recrutement'], ['/support', 'Support']] as [href, label]}
 							<a {href} style="font-size: 0.875rem; color: #64748b; transition: color 0.2s;"
 								onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#7c3aed'}
 								onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#64748b'}>
