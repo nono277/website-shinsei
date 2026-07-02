@@ -43,6 +43,7 @@ export const factions: Faction[] = [
 		colors: { primary: '#ffffff', secondary: '#fbbf24' },
 		symbol: '⚖️',
 		advantages: [
+			'Bonus de stats : +6 Endurance, +3 Force',
 			'Bonus défensif +10% en territoire allié',
 			'Accès aux quêtes de protection de convoi',
 			'Zones sécurisées renforcées accessibles',
@@ -61,6 +62,7 @@ export const factions: Faction[] = [
 		colors: { primary: '#ef4444', secondary: '#f87171' },
 		symbol: '💀',
 		advantages: [
+			'Bonus de stats : +6 Intelligence, +3 Chance',
 			'Dégâts PvP +10% en territoire neutre',
 			'Accès au marché noir dès le rang B',
 			'Bonus attaque contre les membres de l\'Ordre',
@@ -79,6 +81,7 @@ export const factions: Faction[] = [
 		colors: { primary: '#6b7280', secondary: '#22c55e' },
 		symbol: '🧭',
 		advantages: [
+			'Bonus de stats : +6 Agilité, +3 Perception',
 			'Vitesse de déplacement +15% hors zones sécurisées',
 			'Accès aux waystones cachés exclusifs',
 			'Meilleur taux de loot dans les zones abandonnées',
@@ -197,16 +200,16 @@ export interface GuildType {
 
 export const guildTypes: GuildType[] = [
 	{
-		id: 'faction',
-		name: 'Guildes de Faction',
+		id: 'officielle',
+		name: 'Guilde Officielle',
 		icon: '⚔️',
-		description: "Guildes officielles rattachées à une faction (L'Ordre, Les Fracturés, Les Nomades). Combattez sous la bannière de votre faction, participez aux guerres de territoire et progressez ensemble."
+		description: "Créée par un fondateur affilié à une faction (L'Ordre, Les Fracturés ou Les Nomades). La guilde hérite automatiquement de la faction de son fondateur."
 	},
 	{
 		id: 'clandestine',
-		name: 'Guildes Clandestines',
+		name: 'Guilde Clandestine',
 		icon: '🕵️',
-		description: "Guildes secrètes sans faction, opèrent dans l'ombre. Hors des conflits officiels, elles suivent leurs propres règles et objectifs. Accessibles aux joueurs sans faction (Nomades inclus)."
+		description: "Créée par un fondateur hors faction. Elle opère indépendamment, sans bannière ni allégeance à l'une des trois factions."
 	}
 ];
 
@@ -217,33 +220,36 @@ export interface GuildRank {
 }
 
 export const guildRanks: GuildRank[] = [
-	{ num: 1, name: 'Fondateur',  rights: 'Tout — dissoudre, promouvoir, expulser' },
-	{ num: 2, name: 'Officier',   rights: 'Inviter, expulser les membres, gérer le coffre' },
-	{ num: 3, name: 'Membre',     rights: 'Chat guilde, coffre lecture, claim territoire' },
-	{ num: 4, name: 'Recrue',     rights: 'Chat guilde uniquement' },
+	{ num: 1, name: 'Fondateur',  rights: 'Tout — dissoudre, promouvoir, blason, inviter, révoquer' },
+	{ num: 2, name: 'Officier',   rights: 'Inviter, révoquer, claim / unclaim au nom de la guilde' },
+	{ num: 3, name: 'Membre',     rights: 'Chat de guilde, construction sur le territoire, contribue à l\'XP & aux contrats' },
 ];
 
+// Niveaux de guilde (1 → 7) : max membres et chunks de claim par niveau.
 export const guildChunkLimits = [
-	{ rank: 'Fondateur rang B', chunks: 50 },
-	{ rank: 'Fondateur rang A', chunks: 100 },
-	{ rank: 'Fondateur rang S', chunks: 200 },
-	{ rank: 'Fondateur rang SS', chunks: 500 },
+	{ rank: 'Niveau 1 · 5 membres',  chunks: 8 },
+	{ rank: 'Niveau 2 · 10 membres', chunks: 14 },
+	{ rank: 'Niveau 3 · 15 membres', chunks: 20 },
+	{ rank: 'Niveau 4 · 25 membres', chunks: 30 },
+	{ rank: 'Niveau 5 · 35 membres', chunks: 45 },
+	{ rank: 'Niveau 6 · 50 membres', chunks: 65 },
+	{ rank: 'Niveau 7 · 50 membres', chunks: 100 },
 ];
 
 export const guildCommands = [
-	{ cmd: '/faction',                  desc: 'Voir sa faction actuelle' },
-	{ cmd: '/faction rejoindre',        desc: 'Choisir une faction (rang C requis)' },
-	{ cmd: '/faction quitter',          desc: 'Quitter (cooldown 30 jours)' },
-	{ cmd: '/faction info',             desc: 'Infos sur sa faction' },
-	{ cmd: '/guilde',                   desc: 'Menu principal guilde' },
-	{ cmd: '/guilde creer [nom]',       desc: 'Créer une guilde (rang B + 5 000 pièces)' },
-	{ cmd: '/guilde rejoindre',         desc: 'Voir les guildes qui recrutent' },
-	{ cmd: '/guilde inviter [pseudo]',  desc: 'Inviter un joueur' },
-	{ cmd: '/guilde expulser [pseudo]', desc: 'Expulser un membre' },
-	{ cmd: '/guilde guerre [guilde]',   desc: 'Déclarer la guerre à une guilde ennemie' },
-	{ cmd: '/guilde territoire',        desc: 'Gérer les chunks claimés' },
-	{ cmd: '/guilde coffre',            desc: 'Ouvrir le coffre partagé' },
-	{ cmd: '/g [message]',              desc: 'Chat privé de guilde' },
+	{ cmd: '/guilde creer <nom> <tag>',   desc: 'Fonder une guilde (grade Éveillé + 1 000 éclats)' },
+	{ cmd: '/guilde inviter <joueur>',    desc: 'Inviter un joueur (Officier+)' },
+	{ cmd: '/guilde rejoindre <nom>',     desc: 'Rejoindre sur invitation (expire après 5 min)' },
+	{ cmd: '/guilde quitter',             desc: 'Quitter sa guilde' },
+	{ cmd: '/guilde info [nom]',          desc: 'Informations sur une guilde' },
+	{ cmd: '/guilde membres',             desc: 'Liste des membres' },
+	{ cmd: '/guilde promouvoir <joueur>', desc: 'Promouvoir un Membre en Officier (fondateur)' },
+	{ cmd: '/guilde revoquer <joueur>',   desc: 'Exclure un membre (Officier+)' },
+	{ cmd: '/guilde dissoudre',           desc: 'Dissoudre la guilde (fondateur)' },
+	{ cmd: '/guilde blason <id>',         desc: 'Changer le blason (fondateur)' },
+	{ cmd: '/guilde contrats',            desc: 'Contrats hebdomadaires de la guilde' },
+	{ cmd: '/guilde top',                 desc: 'Classement des 10 meilleures guildes' },
+	{ cmd: '/claim guilde',               desc: 'Claim un chunk au nom de la guilde (Officier+)' },
 ];
 
 export const loreText = {

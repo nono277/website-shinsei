@@ -14,6 +14,8 @@ export const GET: RequestHandler = async () => {
 	let eveilles = 0;
 	let donjons  = 0;
 	let failles  = 0;
+	let faillesEnCours   = 0;   // failles actuellement ouvertes (live)
+	let prochaineFaille  = 0;   // epoch ms de la prochaine ouverture auto (0 = inconnu)
 	let serverOnline = false;
 	let players: OnlinePlayer[] = [];
 
@@ -24,10 +26,12 @@ export const GET: RequestHandler = async () => {
 		});
 		if (statsRes.ok) {
 			const stats = await statsRes.json();
-			online       = stats.players  ?? 0;
-			eveilles     = stats.eveilles ?? 0;
-			donjons      = stats.donjons  ?? 0;
-			failles      = stats.failles  ?? 0;
+			online          = stats.players         ?? 0;
+			eveilles        = stats.eveilles        ?? 0;
+			donjons         = stats.donjons         ?? 0;
+			failles         = stats.failles         ?? 0;
+			faillesEnCours  = stats.faillesEnCours  ?? 0;
+			prochaineFaille = stats.prochaineFaille ?? 0;
 			serverOnline = true;
 		}
 	} catch {}
@@ -65,6 +69,8 @@ export const GET: RequestHandler = async () => {
 		eveilles,
 		donjons,
 		failles,
+		faillesEnCours,
+		prochaineFaille,
 		players,
 	});
 };

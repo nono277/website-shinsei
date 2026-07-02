@@ -28,12 +28,29 @@
 	let onlinePlayers = $state<OnlinePlayer[]>([]);
 	const statLabels  = ['Joueurs connectés', 'Éveillés actifs', 'Donjons complétés', 'Failles fermées'];
 
+	// Failles live : nombre en cours + compte à rebours de la prochaine ouverture.
+	let faillesEnCours   = $state(0);
+	let prochaineFailleAt = $state(0);   // epoch ms (0 = inconnu)
+	let now              = $state(Date.now());
+	// Temps restant avant la prochaine faille, formaté "Xh Ym" / "Mm Ss" / "Ss".
+	const prochaineFailleLabel = $derived.by(() => {
+		if (!prochaineFailleAt) return '—';
+		const s = Math.floor((prochaineFailleAt - now) / 1000);
+		if (s <= 0) return 'Imminente';
+		const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+		if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+		if (m > 0) return `${m}m ${String(sec).padStart(2, '0')}s`;
+		return `${sec}s`;
+	});
+
 	async function fetchStats() {
 		try {
 			const res = await fetch('/api/stats');
 			if (res.ok) {
 				const data = await res.json();
 				statTargets  = [data.online ?? 0, data.eveilles ?? 0, data.donjons ?? 0, data.failles ?? 0];
+				faillesEnCours    = data.faillesEnCours  ?? 0;
+				prochaineFailleAt = data.prochaineFaille ?? 0;
 				onlinePlayers = data.players ?? [];
 				animateStats();
 			}
@@ -44,7 +61,8 @@
 		heroVisible = true;
 		fetchStats();
 		const interval = setInterval(fetchStats, 30000);
-		return () => clearInterval(interval);
+		const tick     = setInterval(() => (now = Date.now()), 1000);
+		return () => { clearInterval(interval); clearInterval(tick); };
 	});
 
 	function animateStats() {
@@ -199,7 +217,7 @@
 	border-top:1px solid #1e1530; border-bottom:1px solid #1e1530;
 	padding:4rem 1.5rem;
 ">
-	<div style="max-width:64rem;margin:0 auto;display:grid;grid-template-columns:repeat(1,1fr);gap:2rem;text-align:center;" class="sm:grid-cols-2 md:grid-cols-4">
+	<div style="max-width:72rem;margin:0 auto;display:grid;grid-template-columns:repeat(1,1fr);gap:2rem;text-align:center;" class="sm:grid-cols-2 md:grid-cols-3">
 		{#each statValues as val, i}
 			{@const colors = ['#7c3aed','#06b6d4','#a78bfa','#f472b6']}
 			<div style="display:flex;flex-direction:column;gap:0.5rem;">
@@ -211,6 +229,26 @@
 				</span>
 			</div>
 		{/each}
+
+		<!-- Failles en cours (live) -->
+		<div style="display:flex;flex-direction:column;gap:0.5rem;">
+			<span style="font-family:'Rajdhani',sans-serif;font-size:2.8rem;font-weight:900;color:#f59e0b;text-shadow:0 0 18px #f59e0b55;{faillesEnCours > 0 ? 'animation:pulse 2s infinite;' : ''}">
+				{fmtStat(faillesEnCours)}
+			</span>
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#64748b;">
+				Failles en cours
+			</span>
+		</div>
+
+		<!-- Compte à rebours prochaine faille -->
+		<div style="display:flex;flex-direction:column;gap:0.5rem;">
+			<span style="font-family:'Rajdhani',sans-serif;font-size:2.8rem;font-weight:900;color:#ef4444;text-shadow:0 0 18px #ef444455;white-space:nowrap;">
+				{prochaineFailleLabel}
+			</span>
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#64748b;">
+				Prochaine faille
+			</span>
+		</div>
 	</div>
 </section>
 
