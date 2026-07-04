@@ -4,7 +4,23 @@
 
 	interface ChangelogEntry { version: string; date: string; changes: string[]; }
 
+	// La 1re entrée est considérée comme la version ACTUELLE.
 	const changelog: ChangelogEntry[] = [
+		{
+			version: 'v1.0.1', date: '4 juillet 2026',
+			changes: [
+				'Nouveau : le launcher se met à jour tout seul au démarrage (plus besoin de le réinstaller).',
+				'Nouvelle icône nette à toutes les tailles.',
+				'Section « Notes de mise à jour » revue.',
+				'Difficulté : choix Normal / Hardcore dès la 1re connexion, pertes de la mort (XP & éclats) visibles en temps réel.',
+				'Zone de départ : uniquement des monstres de niveau 1-21 autour du spawn (fini les boss de haut niveau).',
+				'Failles dimensionnelles : durée 1h, jusqu\'à 2 ouvertes en même temps, monstres qui n\'apparaissent plus enterrés.',
+				'Morts : équipement conservé de façon fiable en Normal, lâché au sol en Hardcore.',
+				'Correction du gain de points de stats en boucle après une mort.',
+				'Nouvelle commande /spawn vers les villes du serveur.',
+				'Capacités & dash : suppression des kicks anti-triche intempestifs.',
+			]
+		},
 		{
 			version: 'v1.0', date: '28 mai 2026',
 			changes: [
@@ -17,6 +33,8 @@
 			]
 		},
 	];
+
+	const currentVersion = changelog[0].version;
 
 	const steps = [
 		{ num: '01', title: 'Télécharger', desc: 'Télécharge le launcher SHINSEI. Installation guidée, aucune configuration requise.' },
@@ -35,7 +53,7 @@
 		  a: 'Le launcher se met à jour automatiquement au démarrage. Aucune action requise.' },
 	];
 
-	let openChangelog = $state<string | null>('v1.0');
+	let openChangelog = $state<string | null>(currentVersion);
 	let openFaq       = $state<number | null>(null);
 </script>
 
@@ -59,7 +77,7 @@
 			Le launcher officiel SHINSEI installe automatiquement Minecraft 1.20.1, Forge et toutes les ressources nécessaires.
 		</p>
 
-		<a href="http://cdn.playshinsei.fr/launcher/shinsei-setup.exe" download style="
+		<a href="http://cdn.playshinsei.fr/launcher/SHINSEI-Setup.exe" download style="
 			display:flex; align-items:center; gap:0.75rem;
 			padding:1rem 2.5rem;
 			font-family:'Rajdhani',sans-serif; font-weight:900; font-size:1.1rem; letter-spacing:0.12em;
@@ -80,7 +98,7 @@
 		</a>
 
 		<div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:center;">
-			{#each ['v1.0', 'Minecraft 1.20.1 Forge', '~180 MB', 'Gratuit'] as item, i}
+			{#each ['v1.0.1', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
 				{#if i > 0}<span style="width:3px; height:3px; border-radius:50%; background:#374151;"></span>{/if}
 				<span class="label-mono" style="color:#4b5563;">{item}</span>
 			{/each}
@@ -157,8 +175,8 @@
 						onmouseleave={(e)=>(e.currentTarget as HTMLElement).style.background='#0a0a0f'}
 					>
 						<div style="display:flex; align-items:center; gap:0.75rem;">
-							<span style="font-family:'Rajdhani',sans-serif; font-size:1.1rem; font-weight:900; color:{entry.version==='v1.0'?'#7c3aed':'#94a3b8'};">{entry.version}</span>
-							{#if entry.version === 'v1.0'}
+							<span style="font-family:'Rajdhani',sans-serif; font-size:1.1rem; font-weight:900; color:{entry.version===currentVersion?'#7c3aed':'#94a3b8'};">{entry.version}</span>
+							{#if entry.version === currentVersion}
 								<span style="font-family:'Share Tech Mono',monospace; font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:0.25rem; background:#7c3aed25; color:#7c3aed; border:1px solid #7c3aed50;">ACTUEL</span>
 							{/if}
 							<span style="font-size:0.8rem; color:#4b5563;">{entry.date}</span>
