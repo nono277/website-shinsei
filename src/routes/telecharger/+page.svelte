@@ -7,6 +7,22 @@
 	// La 1re entrée est considérée comme la version ACTUELLE.
 	const changelog: ChangelogEntry[] = [
 		{
+			version: 'v1.0.5', date: '5 juillet 2026',
+			changes: [
+				'Failles repensées : 2 à 3 ouvertes en même temps dans l\'heure, à des coordonnées aléatoires sur la map ou dans les grandes villes via /faille ouvrir (Tokyo, Paris…). À Tokyo, faille de grade F obligatoire ; grade aléatoire ailleurs.',
+				'Zone de départ (1000 blocs) : densité de monstres augmentée, et correction des mobs de haut tier affichés au mauvais niveau (ex. Siegler qui apparaissait en Nv 21 alors qu\'il est catégorisé 70).',
+				'Blocs flottants de retour autour des failles.',
+				'Une seule barre de vie sur les monstres de faille (fin du doublon barre mod / barre custom).',
+				'Au-dessus des autres joueurs : Pseudo · Grade · Niveau, centré et coloré selon le grade (fini le simple « Joueur »).',
+				'Tête de mort ☠ pour les gros tueurs : 15 joueurs éliminés dans la même session (spawnkill compris), remise à zéro à la déconnexion. Notification message + texte à l\'écran + son à l\'obtention.',
+				'XP PvP indexée sur le niveau de l\'adversaire : haut niveau = gros gain, bas niveau = presque rien.',
+				'Anti-farm PvP : même connexion = aucun gain, et retuer le même joueur fait fondre l\'XP et les éclats (un message prévient de la réduction).',
+				'Particules d\'effets masquées au-dessus des autres joueurs.',
+				'Barre latérale qui s\'adapte à son contenu (ne déborde plus).',
+				'Montée automatique des blocs de 1 en courant.',
+			]
+		},
+		{
 			version: 'v1.0.1', date: '4 juillet 2026',
 			changes: [
 				'Nouveau : le launcher se met à jour tout seul au démarrage (plus besoin de le réinstaller).',
@@ -77,7 +93,7 @@
 			Le launcher officiel SHINSEI installe automatiquement Minecraft 1.20.1, Forge et toutes les ressources nécessaires.
 		</p>
 
-		<a href="http://cdn.playshinsei.fr/launcher/SHINSEI-Setup.exe" download style="
+		<a href="https://cdn.playshinsei.fr/launcher/SHINSEI-Setup.exe" download style="
 			display:flex; align-items:center; gap:0.75rem;
 			padding:1rem 2.5rem;
 			font-family:'Rajdhani',sans-serif; font-weight:900; font-size:1.1rem; letter-spacing:0.12em;
@@ -98,7 +114,7 @@
 		</a>
 
 		<div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:center;">
-			{#each ['v1.0.1', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
+			{#each ['v1.0.5', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
 				{#if i > 0}<span style="width:3px; height:3px; border-radius:50%; background:#374151;"></span>{/if}
 				<span class="label-mono" style="color:#4b5563;">{item}</span>
 			{/each}

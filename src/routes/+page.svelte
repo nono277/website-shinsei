@@ -82,16 +82,16 @@
 
 	// Dernière mise à jour mise en avant sur l'accueil (voir /telecharger pour le changelog complet).
 	const latestUpdate = {
-		version: 'v1.0.1',
-		date: '4 JUILLET 2026',
-		title: 'Le launcher se met à jour tout seul',
-		intro: "Plus besoin de réinstaller : relance le launcher, il télécharge et applique la mise à jour automatiquement. Et côté jeu, un gros lot d'équilibrage et de corrections.",
+		version: 'v1.0.5',
+		date: '5 JUILLET 2026',
+		title: 'Failles multi-villes, PvP & monde vivant',
+		intro: "La plus grosse mise à jour de contenu : des failles dans les grandes villes, une zone de départ plus vivante, un PvP repensé avec tête de mort et anti-farm, et une interface plus propre.",
 		highlights: [
-			'Auto-update du launcher au démarrage — zéro réinstallation.',
-			'Difficulté Normal / Hardcore dès la 1re connexion, pertes de mort visibles en direct.',
-			'Zone de départ : uniquement des monstres de niveau 1-21 autour du spawn.',
-			'Failles : durée 1h, jusqu\'à 2 en même temps, plus de monstres enterrés.',
-			'Nouvelle commande /spawn, arbre de compétences fiabilisé, dash sans kick.',
+			'Failles jusqu\'à 3 en même temps, aléatoires ou dans les villes (Tokyo = faille F).',
+			'Zone de départ : plus de monstres et des niveaux enfin corrects.',
+			'Au-dessus des joueurs : Pseudo · Grade · Niveau + tête de mort ☠ dès 15 kills/session.',
+			'XP PvP selon le niveau de l\'adversaire + anti-farm entre amis.',
+			'Blocs flottants des failles de retour, barres de vie et particules nettoyées.',
 		],
 	};
 </script>
