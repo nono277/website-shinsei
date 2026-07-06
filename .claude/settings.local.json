@@ -7,7 +7,16 @@
       "Bash(curl -s \"http://play.playshinsei.fr:8080/stats\")",
       "Bash(git checkout *)",
       "Bash(pnpm run *)",
-      "Bash(npx svelte-check *)"
+      "Bash(npx svelte-check *)",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(node *)",
+      "WebFetch(domain:top-serveurs.net)",
+      "WebFetch(domain:api.top-serveurs.net)",
+      "Bash(curl -s \"https://api.top-serveurs.net/v1/votes/check?token=EIN76KAEIFKAYQ&pseudo=testuser\")",
+      "Bash(curl -s \"https://api.top-serveurs.net/v1/votes/check?token=EIN76KAEIFKAYQ&pseudo=testuser&server_token=EIN76KAEIFKAYQ\")",
+      "Bash(curl -s \"https://api.top-serveurs.net/v1/servers?token=EIN76KAEIFKAYQ\")",
+      "Bash(curl *)"
     ]
   }
 }

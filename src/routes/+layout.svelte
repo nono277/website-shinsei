@@ -107,6 +107,12 @@
 							{label}
 						</a>
 					{/each}
+					<a href="http://www.serveurs-minecraft.org/" target="_blank" rel="noopener noreferrer"
+						style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151; text-decoration: none; transition: color 0.2s;"
+						onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#a855f7'}
+						onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#374151'}>
+						Serveurs Minecraft
+					</a>
 				</div>
 				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #1f2937; text-align: center;">
 					Non affilié à Mojang · Minecraft™ Microsoft

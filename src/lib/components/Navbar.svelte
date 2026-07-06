@@ -14,6 +14,7 @@
 		{ href: '/',            label: 'Accueil'    },
 		{ href: '/classes',     label: 'Classes'    },
 		{ href: '/classement',  label: 'Classement' },
+		{ href: '/vote',        label: 'Vote'        },
 		{ href: '/wiki',        label: 'Wiki'        },
 		{ href: '/map',         label: 'Carte'      },
 		{ href: '/recrutement', label: 'Recrutement' },
