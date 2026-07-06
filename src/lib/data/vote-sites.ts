@@ -9,6 +9,11 @@ export const VOTE_TOKENS: Record<string, string> = {
 	'serveurs-minecraft': 'd9652c78c8d58b2b5cda608e074ea2a445e31a66',
 };
 
+// Sites comptant pour les récompenses (callback HTTP disponible).
+// serveur-minecraft.com utilise uniquement Votifier (plugin MC) → bonus via plugin à implémenter plus tard.
+export const REWARD_SITES = ['minecraft-mp', 'top-serveurs', 'serveurs-minecraft'] as const;
+export type RewardSiteKey = typeof REWARD_SITES[number];
+
 export const VOTE_SITES = {
 	'minecraft-mp': {
 		label: 'Minecraft-MP',

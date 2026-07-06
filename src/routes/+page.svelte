@@ -28,12 +28,29 @@
 	let onlinePlayers = $state<OnlinePlayer[]>([]);
 	const statLabels  = ['Joueurs connectés', 'Éveillés actifs', 'Donjons complétés', 'Failles fermées'];
 
+	// Failles live : nombre en cours + compte à rebours de la prochaine ouverture.
+	let faillesEnCours   = $state(0);
+	let prochaineFailleAt = $state(0);   // epoch ms (0 = inconnu)
+	let now              = $state(Date.now());
+	// Temps restant avant la prochaine faille, formaté "Xh Ym" / "Mm Ss" / "Ss".
+	const prochaineFailleLabel = $derived.by(() => {
+		if (!prochaineFailleAt) return '—';
+		const s = Math.floor((prochaineFailleAt - now) / 1000);
+		if (s <= 0) return 'Imminente';
+		const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+		if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+		if (m > 0) return `${m}m ${String(sec).padStart(2, '0')}s`;
+		return `${sec}s`;
+	});
+
 	async function fetchStats() {
 		try {
 			const res = await fetch('/api/stats');
 			if (res.ok) {
 				const data = await res.json();
 				statTargets  = [data.online ?? 0, data.eveilles ?? 0, data.donjons ?? 0, data.failles ?? 0];
+				faillesEnCours    = data.faillesEnCours  ?? 0;
+				prochaineFailleAt = data.prochaineFaille ?? 0;
 				onlinePlayers = data.players ?? [];
 				animateStats();
 			}
@@ -44,7 +61,8 @@
 		heroVisible = true;
 		fetchStats();
 		const interval = setInterval(fetchStats, 30000);
-		return () => clearInterval(interval);
+		const tick     = setInterval(() => (now = Date.now()), 1000);
+		return () => { clearInterval(interval); clearInterval(tick); };
 	});
 
 	function animateStats() {
@@ -61,6 +79,21 @@
 	}
 
 	const fmtStat = (n: number) => n.toLocaleString('fr-FR');
+
+	// Dernière mise à jour mise en avant sur l'accueil (voir /telecharger pour le changelog complet).
+	const latestUpdate = {
+		version: 'v1.0.7',
+		date: '6 JUILLET 2026',
+		title: 'Quêtes, PNJ vivants & Manuel de l\'Éveillé',
+		intro: "Un vrai fil d'aventure : un système de quêtes complet, des habitants qui peuplent Tokyo, un livre d'accueil pour bien démarrer et une première connexion repensée.",
+		highlights: [
+			'Système de quêtes : /quest ou le bouton QUÊTES dans l\'inventaire — 1 principale + 9 secondaires, récompenses en éclats et en argent.',
+			'Suivi de quête épinglé dans la barre latérale, notification de fin et badge « à réclamer ».',
+			'15 habitants à dialogues dans Tokyo + PNJ de service au spawn (marché, compétences, guilde, faction).',
+			'Manuel de l\'Éveillé remis à la première connexion (ou via /guide).',
+			'Première connexion repensée + messages WorldGuard & EssentialsX en français.',
+		],
+	};
 </script>
 
 <svelte:head>
@@ -199,7 +232,7 @@
 	border-top:1px solid #1e1530; border-bottom:1px solid #1e1530;
 	padding:4rem 1.5rem;
 ">
-	<div style="max-width:64rem;margin:0 auto;display:grid;grid-template-columns:repeat(1,1fr);gap:2rem;text-align:center;" class="sm:grid-cols-2 md:grid-cols-4">
+	<div style="max-width:72rem;margin:0 auto;display:grid;grid-template-columns:repeat(1,1fr);gap:2rem;text-align:center;" class="sm:grid-cols-2 md:grid-cols-3">
 		{#each statValues as val, i}
 			{@const colors = ['#7c3aed','#06b6d4','#a78bfa','#f472b6']}
 			<div style="display:flex;flex-direction:column;gap:0.5rem;">
@@ -211,6 +244,85 @@
 				</span>
 			</div>
 		{/each}
+
+		<!-- Failles en cours (live) -->
+		<div style="display:flex;flex-direction:column;gap:0.5rem;">
+			<span style="font-family:'Rajdhani',sans-serif;font-size:2.8rem;font-weight:900;color:#f59e0b;text-shadow:0 0 18px #f59e0b55;{faillesEnCours > 0 ? 'animation:pulse 2s infinite;' : ''}">
+				{fmtStat(faillesEnCours)}
+			</span>
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#64748b;">
+				Failles en cours
+			</span>
+		</div>
+
+		<!-- Compte à rebours prochaine faille -->
+		<div style="display:flex;flex-direction:column;gap:0.5rem;">
+			<span style="font-family:'Rajdhani',sans-serif;font-size:2.8rem;font-weight:900;color:#ef4444;text-shadow:0 0 18px #ef444455;white-space:nowrap;">
+				{prochaineFailleLabel}
+			</span>
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:#64748b;">
+				Prochaine faille
+			</span>
+		</div>
+	</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     ACTUALITÉS / DERNIÈRE MISE À JOUR
+══════════════════════════════════════════════════════════ -->
+<section use:reveal={{ y: 30, duration: 800 }} style="padding:6rem 1.5rem;background:#0a0a0f;border-top:1px solid #1e1530;">
+	<div style="max-width:72rem;margin:0 auto;">
+		<div style="display:flex;align-items:center;gap:1rem;margin-bottom:2.5rem;justify-content:center;">
+			<span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;box-shadow:0 0 8px #06b6d4;animation:pulse 2s infinite;flex-shrink:0;"></span>
+			<h2 style="font-family:'Rajdhani',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;margin:0;">
+				ACTUALITÉS
+			</h2>
+		</div>
+
+		<div style="position:relative;border-radius:1rem;overflow:hidden;border:1px solid #7c3aed40;background:linear-gradient(135deg,#0f0920,#0d0d15);box-shadow:0 0 45px #7c3aed20;">
+			<div style="height:3px;background:linear-gradient(90deg,#7c3aed,#06b6d4);"></div>
+			<div style="padding:clamp(1.5rem,4vw,2.5rem);display:grid;grid-template-columns:1fr;gap:2rem;align-items:center;" class="lg:grid-cols-2">
+				<!-- Colonne gauche : badge + titre + intro + CTA -->
+				<div>
+					<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem;">
+						<span style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;padding:0.25rem 0.6rem;border-radius:9999px;background:#06b6d4;color:#000;">NOUVEAU</span>
+						<span style="font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:900;color:#7c3aed;">{latestUpdate.version}</span>
+						<span style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:#4b5563;">{latestUpdate.date}</span>
+					</div>
+					<h3 style="font-family:'Rajdhani',sans-serif;font-size:clamp(1.5rem,3vw,2rem);font-weight:900;color:white;line-height:1.1;margin-bottom:0.85rem;">
+						{latestUpdate.title}
+					</h3>
+					<p style="color:#94a3b8;line-height:1.65;margin-bottom:1.5rem;">{latestUpdate.intro}</p>
+					<a href="/telecharger" style="
+						display:inline-flex;align-items:center;gap:0.6rem;
+						font-family:'Rajdhani',sans-serif;font-weight:900;font-size:0.9rem;letter-spacing:0.1em;
+						padding:0.8rem 1.75rem;background:#7c3aed;color:white;
+						border:1px solid #9f67ff;border-radius:0.375rem;box-shadow:0 0 22px #7c3aed60;
+						transition:box-shadow 0.25s,background 0.25s;
+					"
+						onmouseenter={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.boxShadow='0 0 40px #7c3aed90'; el.style.background='#6d28d9'; }}
+						onmouseleave={(e)=>{ const el=e.currentTarget as HTMLElement; el.style.boxShadow='0 0 22px #7c3aed60'; el.style.background='#7c3aed'; }}>
+						TÉLÉCHARGER LA MISE À JOUR →
+					</a>
+				</div>
+
+				<!-- Colonne droite : liste des nouveautés -->
+				<div style="background:#0a0a0f80;border:1px solid #1e1530;border-radius:0.75rem;padding:1.5rem;">
+					<p class="label-mono" style="color:#06b6d4;margin-bottom:1rem;">CE QUI CHANGE</p>
+					<ul style="display:flex;flex-direction:column;gap:0.75rem;">
+						{#each latestUpdate.highlights as change}
+							<li style="display:flex;align-items:flex-start;gap:0.6rem;font-size:0.9rem;color:#cbd5e1;line-height:1.5;">
+								<span style="color:#7c3aed;flex-shrink:0;margin-top:1px;">▸</span>
+								{change}
+							</li>
+						{/each}
+					</ul>
+					<a href="/telecharger" style="display:inline-block;margin-top:1.25rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.8rem;color:#06b6d4;">
+						VOIR TOUTES LES NOTES →
+					</a>
+				</div>
+			</div>
+		</div>
 	</div>
 </section>
 

@@ -8,6 +8,7 @@
       "Bash(git checkout *)",
       "Bash(pnpm run *)",
       "Bash(npx svelte-check *)",
+<<<<<<< HEAD
       "Bash(Get-ChildItem -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(node *)",
@@ -17,6 +18,29 @@
       "Bash(curl -s \"https://api.top-serveurs.net/v1/votes/check?token=EIN76KAEIFKAYQ&pseudo=testuser&server_token=EIN76KAEIFKAYQ\")",
       "Bash(curl -s \"https://api.top-serveurs.net/v1/servers?token=EIN76KAEIFKAYQ\")",
       "Bash(curl *)"
+=======
+      "PowerShell(npm run *)",
+      "PowerShell($mvn = \\(Get-Command mvn -ErrorAction SilentlyContinue\\); if \\($mvn\\) { \"mvn: $\\($mvn.Source\\)\" } else { \"mvn NOT found\" }; $jc = \\(Get-Command javac -ErrorAction SilentlyContinue\\); if \\($jc\\) { javac -version 2>&1 } else { \"javac NOT found\" })",
+      "Bash(python -c \"import yaml,sys; d=yaml.safe_load\\(open\\('groups.yml',encoding='utf-8'\\)\\); g=d['groups']; print\\('OK — groupes:', len\\(g\\)\\); import json; [print\\(' ', k, '| parents:', v.get\\('parents'\\), '| perms:', len\\(v.get\\('permissions',[]\\)\\)\\) for k,v in g.items\\(\\)]\")",
+      "Bash(python -m pip install --quiet pyyaml)",
+      "Bash(python -c ' *)",
+      "Bash(nslookup cdn.playshinsei.fr)",
+      "Bash(nslookup playshinsei.fr)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"HTTP %{http_code} — %{url_effective}\\\\n\" http://cdn.playshinsei.fr/manifest)",
+      "Bash(node encrypt-mods.mjs)",
+      "Bash(curl -s -m 8 http://play.playshinsei.fr:8080/leaderboard)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"leaderboard: %{http_code}\\\\n\" http://play.playshinsei.fr:8080/leaderboard)",
+      "Bash(curl -s -m 8 -o /dev/null -w \"stats: %{http_code}\\\\n\" http://play.playshinsei.fr:8080/stats)",
+      "Bash(curl -s -m 8 http://play.playshinsei.fr:8080/stats)",
+      "Read(//c/Users/sella/AppData/Roaming/.minecraft/shaderpacks/**)",
+      "Read(//c/Users/sella/AppData/Roaming/.minecraft/resourcepacks/**)",
+      "Read(//c/Users/sella/AppData/Roaming/.minecraft/**)",
+      "Read(//c/Users/sella/AppData/Roaming/.minecraft/config/**)",
+      "Bash(grep -iE \"shinsei|menu|\\\\.jar$\")",
+      "Bash(cmd.exe //c \"gradlew.bat build --console=plain --no-daemon\")",
+      "Bash(sh gradlew build --console=plain --no-daemon)",
+      "Bash(grep -nE \"SERVER_IP|playshinsei|25565|:[0-9]{4,5}\" \"/z/documents/shinsei/shinsei-launcher/apps/launcher/resources/shinsei-mod/ShinseiMenuMod.java\")"
+>>>>>>> 27c541adc839af1c2cf96e629c8ba307c5a2db52
     ]
   }
 }

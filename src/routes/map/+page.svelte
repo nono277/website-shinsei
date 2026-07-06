@@ -6,6 +6,31 @@
 	let error  = $state(false);
 	let mixedContent = $state(false);
 
+	// Failles live (bandeau) : nombre en cours + compte à rebours de la prochaine ouverture.
+	let faillesEnCours    = $state(0);
+	let prochaineFailleAt = $state(0);
+	let now               = $state(Date.now());
+	const prochaineFailleLabel = $derived.by(() => {
+		if (!prochaineFailleAt) return '—';
+		const s = Math.floor((prochaineFailleAt - now) / 1000);
+		if (s <= 0) return 'Imminente';
+		const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+		if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`;
+		if (m > 0) return `${m}m ${String(sec).padStart(2, '0')}s`;
+		return `${sec}s`;
+	});
+
+	async function fetchStats() {
+		try {
+			const res = await fetch('/api/stats');
+			if (res.ok) {
+				const data = await res.json();
+				faillesEnCours    = data.faillesEnCours  ?? 0;
+				prochaineFailleAt = data.prochaineFaille ?? 0;
+			}
+		} catch {}
+	}
+
 	const TIMEOUT_MS = 15_000;
 
 	onMount(() => {
@@ -15,10 +40,14 @@
 			return;
 		}
 
+		fetchStats();
+		const statsInterval = setInterval(fetchStats, 30_000);
+		const tick          = setInterval(() => (now = Date.now()), 1000);
+
 		const timer = setTimeout(() => {
 			if (!loaded) error = true;
 		}, TIMEOUT_MS);
-		return () => clearTimeout(timer);
+		return () => { clearTimeout(timer); clearInterval(statsInterval); clearInterval(tick); };
 	});
 </script>
 
@@ -27,6 +56,30 @@
 </svelte:head>
 
 <div style="position: relative; height: calc(100vh - 60px); background: #050508; overflow: hidden;">
+
+	<!-- Bandeau live : failles en cours + prochaine faille -->
+	<div style="
+		position: absolute; top: 1rem; left: 50%; transform: translateX(-50%);
+		z-index: 10; display: flex; gap: 0.6rem; pointer-events: none; flex-wrap: wrap; justify-content: center;
+	">
+		<div style="
+			display: flex; align-items: center; gap: 0.5rem;
+			background: rgba(13,13,21,0.85); border: 1px solid #f59e0b40;
+			border-radius: 0.5rem; padding: 0.45rem 0.9rem; backdrop-filter: blur(8px);
+		">
+			<span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;box-shadow:0 0 8px #f59e0b;{faillesEnCours > 0 ? 'animation:pulse 2s infinite;' : ''}"></span>
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:#94a3b8;letter-spacing:0.08em;">FAILLES EN COURS</span>
+			<span style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:0.95rem;color:#f59e0b;">{faillesEnCours}</span>
+		</div>
+		<div style="
+			display: flex; align-items: center; gap: 0.5rem;
+			background: rgba(13,13,21,0.85); border: 1px solid #ef444440;
+			border-radius: 0.5rem; padding: 0.45rem 0.9rem; backdrop-filter: blur(8px);
+		">
+			<span style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:#94a3b8;letter-spacing:0.08em;">PROCHAINE FAILLE</span>
+			<span style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:0.95rem;color:#ef4444;white-space:nowrap;">{prochaineFailleLabel}</span>
+		</div>
+	</div>
 
 	<!-- Iframe Dynmap (uniquement si pas de mixed content) -->
 	{#if !mixedContent}

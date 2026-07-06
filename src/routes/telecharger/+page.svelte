@@ -4,7 +4,51 @@
 
 	interface ChangelogEntry { version: string; date: string; changes: string[]; }
 
+	// La 1re entrée est considérée comme la version ACTUELLE.
 	const changelog: ChangelogEntry[] = [
+		{
+			version: 'v1.0.7', date: '6 juillet 2026',
+			changes: [
+				'Système de quêtes complet : ouvre le journal avec /quest ou le bouton QUÊTES dans l\'inventaire. Une quête principale et 9 secondaires, avec récompenses en éclats et en argent.',
+				'Suivi de quête : clique une quête pour l\'épingler dans ta barre latérale et voir ta progression en direct. Notification quand une quête est terminée, et badge doré quand une récompense est à réclamer.',
+				'PNJ de Tokyo : 15 habitants qui racontent leur histoire (clic droit) et des PNJ de service au spawn (marché, compétences, statistiques, guilde, faction).',
+				'Manuel de l\'Éveillé : un livre d\'accueil rassemblant toutes les infos essentielles, remis à la première connexion (ou via /guide).',
+				'Première connexion repensée : intro cinématique, parcours guidé difficulté → classe, célébration à l\'éveil.',
+				'Messages de WorldGuard et EssentialsX traduits en français. Fini le « starter pack » imposé par les mods.',
+				'Barre de vie et liste des joueurs nettoyées des PNJ ; divers ajustements d\'interface.',
+			]
+		},
+		{
+			version: 'v1.0.6', date: '5 juillet 2026',
+			changes: [
+				'Failles repensées : 2 à 3 ouvertes en même temps dans l\'heure, à des coordonnées aléatoires sur la map ou dans les grandes villes via /faille ouvrir (Tokyo, Paris…). À Tokyo, faille de grade F obligatoire ; grade aléatoire ailleurs.',
+				'Zone de départ (1000 blocs) : densité de monstres augmentée, et correction des mobs de haut tier affichés au mauvais niveau (ex. Siegler qui apparaissait en Nv 21 alors qu\'il est catégorisé 70).',
+				'Blocs flottants de retour autour des failles.',
+				'Une seule barre de vie sur les monstres : les barres des mods (Neat & SLU) sont coupées, y compris sur les mobs moddés (Alex\'s Mobs…) — seule la barre custom reste.',
+				'Au-dessus des autres joueurs : Pseudo · Grade · Niveau, centré et coloré selon le grade (fini le simple « Joueur »).',
+				'Tête de mort ☠ pour les gros tueurs : 15 joueurs éliminés dans la même session (spawnkill compris), remise à zéro à la déconnexion. Notification message + texte à l\'écran + son à l\'obtention.',
+				'XP PvP indexée sur le niveau de l\'adversaire : haut niveau = gros gain, bas niveau = presque rien.',
+				'Anti-farm PvP : même connexion = aucun gain, et retuer le même joueur fait fondre l\'XP et les éclats (un message prévient de la réduction).',
+				'Particules d\'effets masquées au-dessus des autres joueurs.',
+				'Barre latérale qui s\'adapte à son contenu (ne déborde plus).',
+				'Montée automatique des blocs de 1 en courant.',
+			]
+		},
+		{
+			version: 'v1.0.1', date: '4 juillet 2026',
+			changes: [
+				'Nouveau : le launcher se met à jour tout seul au démarrage (plus besoin de le réinstaller).',
+				'Nouvelle icône nette à toutes les tailles.',
+				'Section « Notes de mise à jour » revue.',
+				'Difficulté : choix Normal / Hardcore dès la 1re connexion, pertes de la mort (XP & éclats) visibles en temps réel.',
+				'Zone de départ : uniquement des monstres de niveau 1-21 autour du spawn (fini les boss de haut niveau).',
+				'Failles dimensionnelles : durée 1h, jusqu\'à 2 ouvertes en même temps, monstres qui n\'apparaissent plus enterrés.',
+				'Morts : équipement conservé de façon fiable en Normal, lâché au sol en Hardcore.',
+				'Correction du gain de points de stats en boucle après une mort.',
+				'Nouvelle commande /spawn vers les villes du serveur.',
+				'Capacités & dash : suppression des kicks anti-triche intempestifs.',
+			]
+		},
 		{
 			version: 'v1.0', date: '28 mai 2026',
 			changes: [
@@ -17,6 +61,8 @@
 			]
 		},
 	];
+
+	const currentVersion = changelog[0].version;
 
 	const steps = [
 		{ num: '01', title: 'Télécharger', desc: 'Télécharge le launcher SHINSEI. Installation guidée, aucune configuration requise.' },
@@ -35,7 +81,7 @@
 		  a: 'Le launcher se met à jour automatiquement au démarrage. Aucune action requise.' },
 	];
 
-	let openChangelog = $state<string | null>('v1.0');
+	let openChangelog = $state<string | null>(currentVersion);
 	let openFaq       = $state<number | null>(null);
 </script>
 
@@ -59,7 +105,7 @@
 			Le launcher officiel SHINSEI installe automatiquement Minecraft 1.20.1, Forge et toutes les ressources nécessaires.
 		</p>
 
-		<a href="http://cdn.playshinsei.fr/launcher/shinsei-setup.exe" download style="
+		<a href="https://cdn.playshinsei.fr/launcher/SHINSEI-Setup.exe" download style="
 			display:flex; align-items:center; gap:0.75rem;
 			padding:1rem 2.5rem;
 			font-family:'Rajdhani',sans-serif; font-weight:900; font-size:1.1rem; letter-spacing:0.12em;
@@ -80,7 +126,7 @@
 		</a>
 
 		<div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:center;">
-			{#each ['v1.0', 'Minecraft 1.20.1 Forge', '~180 MB', 'Gratuit'] as item, i}
+			{#each ['v1.0.7', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
 				{#if i > 0}<span style="width:3px; height:3px; border-radius:50%; background:#374151;"></span>{/if}
 				<span class="label-mono" style="color:#4b5563;">{item}</span>
 			{/each}
@@ -157,8 +203,8 @@
 						onmouseleave={(e)=>(e.currentTarget as HTMLElement).style.background='#0a0a0f'}
 					>
 						<div style="display:flex; align-items:center; gap:0.75rem;">
-							<span style="font-family:'Rajdhani',sans-serif; font-size:1.1rem; font-weight:900; color:{entry.version==='v1.0'?'#7c3aed':'#94a3b8'};">{entry.version}</span>
-							{#if entry.version === 'v1.0'}
+							<span style="font-family:'Rajdhani',sans-serif; font-size:1.1rem; font-weight:900; color:{entry.version===currentVersion?'#7c3aed':'#94a3b8'};">{entry.version}</span>
+							{#if entry.version === currentVersion}
 								<span style="font-family:'Share Tech Mono',monospace; font-size:0.6rem; padding:0.15rem 0.5rem; border-radius:0.25rem; background:#7c3aed25; color:#7c3aed; border:1px solid #7c3aed50;">ACTUEL</span>
 							{/if}
 							<span style="font-size:0.8rem; color:#4b5563;">{entry.date}</span>
