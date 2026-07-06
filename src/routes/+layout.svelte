@@ -107,16 +107,24 @@
 							{label}
 						</a>
 					{/each}
-					<a href="http://www.serveurs-minecraft.org/" target="_blank" rel="noopener noreferrer"
-						style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151; text-decoration: none; transition: color 0.2s;"
-						onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#a855f7'}
-						onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#374151'}>
-						Serveurs Minecraft
-					</a>
 				</div>
 				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #1f2937; text-align: center;">
 					Non affilié à Mojang · Minecraft™ Microsoft
 				</p>
+			</div>
+
+			<!-- Backlinks classements — requis par les sites -->
+			<div style="margin-top: 1rem; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.6rem; color: #1f2937;">
+				Classements :
+				<a href="http://www.serveurs-minecraft.org/" target="_blank" rel="noopener noreferrer"
+					style="color: #1f2937; text-decoration: none; transition: color 0.2s;"
+					onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#a855f7'}
+					onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#1f2937'}>Serveurs-Minecraft.org</a>
+				·
+				<a href="https://www.serveursminecraft.org/serveur/7652/" target="_blank" rel="noopener noreferrer"
+					style="color: #1f2937; text-decoration: none; transition: color 0.2s;"
+					onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#a855f7'}
+					onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#1f2937'}>ServeursMinecraft.org</a>
 			</div>
 		</div>
 	</footer>

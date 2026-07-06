@@ -1,17 +1,12 @@
 // Clés API officielles — vérification directe sur leur API, impossible à faker.
-export const MINECRAFT_MP_API_KEY  = '84STfIGkEZnlwTVOBjtQQ7LDNfYvyypdoX6';
-export const TOP_SERVEURS_API_KEY  = 'EIN76KAEIFKAYQ';
+export const MINECRAFT_MP_API_KEY = '84STfIGkEZnlwTVOBjtQQ7LDNfYvyypdoX6';
+export const TOP_SERVEURS_API_KEY = 'EIN76KAEIFKAYQ';
 
-// Tokens secrets pour les sites sans API de vérification (à coller dans leur panneau admin).
-// Format callback : https://playshinsei.fr/api/vote/callback/SITE?token=TOKEN
-export const VOTE_TOKENS: Record<string, string> = {
-	'serveur-minecraft':  '5532e453753ba076c16eebc5c0e35ab1a8e48995',
-	'serveurs-minecraft': 'd9652c78c8d58b2b5cda608e074ea2a445e31a66',
-};
+// Vérification par IP — aucun token ni callback nécessaire.
+export const SERVEURS_MC_SERVER_ID     = '63991'; // serveurs-minecraft.org
+export const SERVEURS_MC_ORG_SERVER_ID = '7652';  // serveursminecraft.org
 
-// Sites comptant pour les récompenses (callback HTTP disponible).
-// serveur-minecraft.com utilise uniquement Votifier (plugin MC) → bonus via plugin à implémenter plus tard.
-export const REWARD_SITES = ['minecraft-mp', 'top-serveurs', 'serveurs-minecraft'] as const;
+export const REWARD_SITES = ['minecraft-mp', 'top-serveurs', 'serveurs-minecraft', 'serveursminecraft'] as const;
 export type RewardSiteKey = typeof REWARD_SITES[number];
 
 export const VOTE_SITES = {
@@ -29,18 +24,18 @@ export const VOTE_SITES = {
 		color: '#f59e0b',
 		period: 'Toutes les 2h',
 	},
-	'serveur-minecraft': {
-		label: 'Serveur-Minecraft.com',
-		url: 'https://serveur-minecraft.com/5785',
-		cooldownMs: 3 * 60 * 60 * 1000,
-		color: '#06b6d4',
-		period: 'Toutes les 3h',
-	},
 	'serveurs-minecraft': {
 		label: 'Serveurs-Minecraft.org',
 		url: 'http://www.serveurs-minecraft.org/vote.php?id=63991',
 		cooldownMs: 24 * 60 * 60 * 1000,
 		color: '#a855f7',
+		period: 'Toutes les 24h',
+	},
+	'serveursminecraft': {
+		label: 'ServeursMinecraft.org',
+		url: 'https://www.serveursminecraft.org/serveur/7652/',
+		cooldownMs: 24 * 60 * 60 * 1000,
+		color: '#06b6d4',
 		period: 'Toutes les 24h',
 	},
 } as const;

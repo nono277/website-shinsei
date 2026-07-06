@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
-	import { VOTE_SITES, VOTE_REWARDS, type SiteKey } from '$lib/data/vote-sites';
+	import { VOTE_SITES, VOTE_REWARDS, REWARD_SITES, type SiteKey } from '$lib/data/vote-sites';
 
 	let { data }: { data: PageData } = $props();
 
@@ -10,16 +10,24 @@
 	// Reactive clock — updates every second for countdown display
 	let now = $state(Date.now());
 
-	// Server-side vote status: updated via AJAX, initialized from SSR for logged-in users.
-	// Only server-side data (callback confirmed) counts as "voted".
-	type SiteStatus = { lastVoteAt: number | null; canVote: boolean; nextVoteAt: number | null };
-	type VoteStatus = { sites: Record<SiteKey, SiteStatus>; votedCount: number; pendingRewards: number };
+	// Server-side vote status (callback confirmed) — seule source de vérité pour les récompenses
+	type SiteStatus = {
+		lastVoteAt: number | null;
+		canVote: boolean;
+		nextVoteAt: number | null;
+		countsForReward: boolean;
+	};
+	type VoteStatus = {
+		sites: Record<SiteKey, SiteStatus>;
+		rewardVotedCount: number;
+		rewardTotal: number;
+		pendingRewards: number;
+	};
 	let serverOverride = $state<VoteStatus | null>(null);
 	let serverStatus   = $derived<VoteStatus | null>(serverOverride ?? (data.voteStatus as VoteStatus | null));
 
-	// Sites where the button was clicked but callback not yet confirmed
+	// Sites où le bouton a été cliqué mais callback pas encore reçu
 	let pendingClick = $state<Set<SiteKey>>(new Set());
-	// Timestamp of the last click per site (to auto-expire pending state)
 	let clickedAt    = $state<Partial<Record<SiteKey, number>>>({});
 
 	// Claim state
@@ -27,25 +35,27 @@
 	let claimSuccess = $state(false);
 	let claimError   = $state('');
 
-	// Per-site computed info — "VOTÉ" ONLY from server callback confirmation
+	const rewardSiteSet = new Set(REWARD_SITES as readonly string[]);
+
+	// Info par site — "VOTÉ" uniquement sur confirmation serveur (callback reçu)
 	let voteInfo = $derived(
 		sites.map(([key, site]) => {
-			const srv      = serverStatus?.sites[key];
-			// canVote: true = pas encore voté (ou cooldown expiré), false = vote confirmé actif
-			const canVote  = srv ? srv.canVote || now >= (srv.nextVoteAt ?? 0) : true;
-			const nextVoteAt = srv?.nextVoteAt ?? null;
-			const timeLeft = !canVote && nextVoteAt ? Math.max(0, nextVoteAt - now) : 0;
+			const srv           = serverStatus?.sites[key];
+			const canVote       = srv ? srv.canVote || now >= (srv.nextVoteAt ?? 0) : true;
+			const nextVoteAt    = srv?.nextVoteAt ?? null;
+			const timeLeft      = !canVote && nextVoteAt ? Math.max(0, nextVoteAt - now) : 0;
+			const countsForReward = rewardSiteSet.has(key);
 
-			// Pending: user clicked but no server confirmation yet (expires after 3 min)
 			const clickTs  = clickedAt[key];
 			const isPending = canVote && pendingClick.has(key) && clickTs != null && (now - clickTs) < 3 * 60_000;
 
-			return { key, site, canVote, nextVoteAt, timeLeft, isPending };
+			return { key, site, canVote, nextVoteAt, timeLeft, isPending, countsForReward };
 		})
 	);
 
-	let votedCount       = $derived(voteInfo.filter(v => !v.canVote).length);
-	let allVoted         = $derived(votedCount === 3);
+	let rewardVotedCount = $derived(serverStatus?.rewardVotedCount ?? 0);
+	let rewardTotal      = $derived(serverStatus?.rewardTotal ?? REWARD_SITES.length);
+	let allRewardVoted   = $derived(rewardVotedCount >= rewardTotal);
 	let hasPendingReward = $derived((serverStatus?.pendingRewards ?? 0) > 0);
 
 	function fmtTime(ms: number): string {
@@ -66,29 +76,24 @@
 		return `Il y a ${Math.floor(elapsed / 60)}m`;
 	}
 
-	// Click → ouvre le site ET démarre le polling intensif
 	function handleVote(key: SiteKey, url: string): void {
-		if (!data.user) {
-			window.open(url, '_blank', 'noopener,noreferrer');
-			return;
+		if (data.user) {
+			clickedAt    = { ...clickedAt, [key]: Date.now() };
+			pendingClick = new Set([...pendingClick, key]);
+			startFastPoll();
 		}
-		clickedAt    = { ...clickedAt, [key]: Date.now() };
-		pendingClick = new Set([...pendingClick, key]);
 		window.open(url, '_blank', 'noopener,noreferrer');
-		startFastPoll();
 	}
 
-	// Polling rapide (5s) pendant 3 minutes après un clic pour détecter le callback
 	let fastPollActive = false;
 	function startFastPoll(): void {
 		if (fastPollActive) return;
 		fastPollActive = true;
 		let count = 0;
-		const limit = 36; // 36 × 5s = 3 minutes
 		const id = setInterval(async () => {
 			count++;
 			await refreshStatus();
-			if (count >= limit) { clearInterval(id); fastPollActive = false; }
+			if (count >= 36) { clearInterval(id); fastPollActive = false; }
 		}, 5_000);
 	}
 
@@ -99,11 +104,9 @@
 			if (!res.ok) return;
 			const json = await res.json();
 			if (!json.authenticated) return;
+			const { sites: siteMap, rewardVotedCount, rewardTotal, pendingRewards } = json;
+			serverOverride = { sites: siteMap, rewardVotedCount, rewardTotal, pendingRewards };
 
-			const { sites: siteMap, votedCount, pendingRewards } = json;
-			serverOverride = { sites: siteMap, votedCount, pendingRewards };
-
-			// Retirer des "pending" les sites dont le callback est arrivé
 			const newPending = new Set(pendingClick);
 			for (const [k] of sites) {
 				if (siteMap[k] && !siteMap[k].canVote) newPending.delete(k as SiteKey);
@@ -113,33 +116,22 @@
 	}
 
 	async function claimRewards(): Promise<void> {
-		claiming     = true;
-		claimError   = '';
-		claimSuccess = false;
+		claiming = true; claimError = ''; claimSuccess = false;
 		try {
 			const res = await fetch('/api/vote/claim', { method: 'POST' });
-			if (res.ok) {
-				claimSuccess = true;
-				await refreshStatus();
-			} else {
+			if (res.ok) { claimSuccess = true; await refreshStatus(); }
+			else {
 				const j = await res.json().catch(() => ({}));
 				claimError = j.error ?? 'Erreur lors de la réclamation.';
 			}
-		} catch {
-			claimError = 'Erreur réseau.';
-		} finally {
-			claiming = false;
-		}
+		} catch { claimError = 'Erreur réseau.'; }
+		finally { claiming = false; }
 	}
 
 	onMount(() => {
 		const clockTimer = setInterval(() => { now = Date.now(); }, 1000);
-		// Polling lent de fond pour les connectés (MAJ du statut toutes les 30s)
-		const slowPoll = data.user ? setInterval(refreshStatus, 30_000) : null;
-		return () => {
-			clearInterval(clockTimer);
-			if (slowPoll) clearInterval(slowPoll);
-		};
+		const slowPoll   = data.user ? setInterval(refreshStatus, 30_000) : null;
+		return () => { clearInterval(clockTimer); if (slowPoll) clearInterval(slowPoll); };
 	});
 </script>
 
@@ -158,77 +150,71 @@
 				VOTE &amp; RÉCOMPENSES
 			</h1>
 			<p style="color: #64748b; font-size: 0.9rem; max-width: 520px; margin: 0 auto;">
-				Votez sur les 3 sites partenaires, les récompenses sont créditées automatiquement une fois le vote <strong style="color:#475569;">confirmé</strong> par le site.
+				Votez sur les sites partenaires. Les récompenses sont créditées automatiquement une fois le vote <strong style="color:#475569;">confirmé</strong> par le site.
 			</p>
 		</div>
 
 		<!-- Vote cards -->
-		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+		<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
 			{#each voteInfo as info (info.key)}
 				{@const voted   = !info.canVote}
 				{@const pending = info.isPending}
 				<div style="
 					position: relative; overflow: hidden;
 					background: {voted ? info.site.color + '0d' : pending ? '#0f1020' : '#0f0f1a'};
-					border: 1px solid {voted ? info.site.color + '50' : pending ? '#3b4bd080' : '#1e1530'};
-					border-radius: 0.75rem;
-					padding: 1.5rem;
+					border: 1px solid {voted ? info.site.color + '50' : pending ? '#3b4bd080' : info.countsForReward ? '#1e1530' : '#161622'};
+					border-radius: 0.75rem; padding: 1.25rem;
 					transition: border-color 0.25s, background 0.25s;
+					opacity: {info.countsForReward ? 1 : 0.8};
 				">
 					{#if voted}
 						<div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient({info.site.color}30,transparent 70%);pointer-events:none;"></div>
 					{/if}
 					{#if pending}
-						<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right, transparent, #3b82f6, transparent);animation:shimmer 2s ease-in-out infinite;" ></div>
+						<div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,#3b82f6,transparent);animation:shimmer 2s ease-in-out infinite;"></div>
 					{/if}
 
-					<!-- Period + site label -->
-					<div style="display:flex;align-items:center;gap:0.45rem;margin-bottom:0.3rem;">
+					<!-- Badge "bonus" pour les sites sans tracking -->
+					{#if !info.countsForReward}
+						<div style="position:absolute;top:0.6rem;right:0.6rem;background:#1e1530;border:1px solid #2d2540;border-radius:9999px;padding:0.1rem 0.5rem;">
+							<span style="font-size:0.6rem;color:#475569;font-family:'Share Tech Mono',monospace;">BONUS</span>
+						</div>
+					{/if}
+
+					<!-- Period + label -->
+					<div style="display:flex;align-items:center;gap:0.45rem;margin-bottom:0.25rem;">
 						<span style="width:7px;height:7px;border-radius:50%;flex-shrink:0;background:{info.site.color};box-shadow:0 0 6px {info.site.color};"></span>
-						<span style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:{info.site.color};letter-spacing:0.12em;">
-							{info.site.period.toUpperCase()}
-						</span>
+						<span style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:{info.site.color};letter-spacing:0.1em;">{info.site.period.toUpperCase()}</span>
 					</div>
-					<h2 style="font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:900;color:white;letter-spacing:0.03em;margin:0 0 1rem;">
-						{info.site.label}
-					</h2>
+					<h2 style="font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:900;color:white;letter-spacing:0.03em;margin:0 0 0.85rem;">{info.site.label}</h2>
 
-					<!-- Mini reward tags -->
-					<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.25rem;">
-						<span style="font-size:0.68rem;color:#94a3b8;background:#ffffff08;padding:0.18rem 0.5rem;border-radius:9999px;border:1px solid #1e1530;">⚡ {VOTE_REWARDS.perVote.xp} XP</span>
-						<span style="font-size:0.68rem;color:#94a3b8;background:#ffffff08;padding:0.18rem 0.5rem;border-radius:9999px;border:1px solid #1e1530;">💰 {VOTE_REWARDS.perVote.dollars}$</span>
-						<span style="font-size:0.68rem;color:#94a3b8;background:#ffffff08;padding:0.18rem 0.5rem;border-radius:9999px;border:1px solid #1e1530;">💎 {VOTE_REWARDS.perVote.eclats} Éclats</span>
+					<!-- Récompenses par vote -->
+					<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;">
+						<span style="font-size:0.65rem;color:#94a3b8;background:#ffffff08;padding:0.15rem 0.45rem;border-radius:9999px;border:1px solid #1e1530;">⚡ {VOTE_REWARDS.perVote.xp} XP</span>
+						<span style="font-size:0.65rem;color:#94a3b8;background:#ffffff08;padding:0.15rem 0.45rem;border-radius:9999px;border:1px solid #1e1530;">💰 {VOTE_REWARDS.perVote.dollars}$</span>
+						<span style="font-size:0.65rem;color:#94a3b8;background:#ffffff08;padding:0.15rem 0.45rem;border-radius:9999px;border:1px solid #1e1530;">💎 {VOTE_REWARDS.perVote.eclats} Éclats</span>
 					</div>
 
-					<!-- Action zone -->
+					<!-- Action -->
 					{#if voted}
-						<!-- Vote confirmé par callback -->
-						<div style="padding:0.6rem 1rem;background:{info.site.color}12;border:1px solid {info.site.color}35;border-radius:0.5rem;text-align:center;">
-							<p style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:{info.site.color};margin:0 0 0.1rem;letter-spacing:0.06em;">✓ VOTE CONFIRMÉ</p>
+						<div style="padding:0.55rem 0.9rem;background:{info.site.color}12;border:1px solid {info.site.color}35;border-radius:0.5rem;text-align:center;">
+							<p style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:{info.site.color};margin:0 0 0.1rem;letter-spacing:0.06em;">✓ VOTE CONFIRMÉ</p>
 							{#if info.timeLeft > 0}
-								<p style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:#475569;margin:0;">
-									Prochain vote : <span style="color:#64748b;font-weight:700;">{fmtTime(info.timeLeft)}</span>
-								</p>
+								<p style="font-family:'Rajdhani',sans-serif;font-size:0.78rem;color:#475569;margin:0;">Prochain : <span style="color:#64748b;font-weight:700;">{fmtTime(info.timeLeft)}</span></p>
 							{/if}
 						</div>
-
 					{:else if pending}
-						<!-- Clic effectué, en attente du callback -->
-						<div style="padding:0.6rem 1rem;background:#3b82f615;border:1px solid #3b82f640;border-radius:0.5rem;text-align:center;">
-							<p style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:#60a5fa;margin:0 0 0.1rem;letter-spacing:0.06em;">⏳ EN ATTENTE DE CONFIRMATION</p>
-							<p style="font-size:0.75rem;color:#334155;margin:0;">
-								Ouvert {fmtPending(info.key)} · Votez sur le site →
-							</p>
+						<div style="padding:0.55rem 0.9rem;background:#3b82f615;border:1px solid #3b82f640;border-radius:0.5rem;text-align:center;">
+							<p style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:#60a5fa;margin:0 0 0.1rem;letter-spacing:0.06em;">⏳ EN ATTENTE</p>
+							<p style="font-size:0.72rem;color:#334155;margin:0;">Ouvert {fmtPending(info.key)}</p>
 						</div>
-
 					{:else}
-						<!-- Bouton vote -->
 						<button
 							onclick={() => handleVote(info.key, info.site.url)}
 							style="
 								width:100%;box-sizing:border-box;
 								font-family:'Rajdhani',sans-serif;font-size:0.875rem;font-weight:900;letter-spacing:0.1em;
-								padding:0.6rem 1rem;
+								padding:0.55rem 1rem;
 								background:{info.site.color}22;color:{info.site.color};
 								border:1px solid {info.site.color}55;border-radius:0.5rem;cursor:pointer;
 								transition: background 0.15s, box-shadow 0.15s;
@@ -243,41 +229,37 @@
 								el.style.background = info.site.color + '22';
 								el.style.boxShadow  = 'none';
 							}}
-						>
-							VOTER →
-						</button>
+						>VOTER →</button>
 					{/if}
 				</div>
 			{/each}
 		</div>
 
-		<!-- Progress bar -->
+		<!-- Progress bar — basée sur les 3 sites trackables -->
 		<div style="background:#0f0f1a;border:1px solid #1e1530;border-radius:0.75rem;padding:1.25rem;margin-bottom:1.5rem;">
 			<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
-				<p style="font-family:'Rajdhani',sans-serif;font-size:0.85rem;font-weight:700;color:#64748b;letter-spacing:0.08em;margin:0;">PROGRESSION</p>
-				<p style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:{allVoted ? '#22c55e' : '#7c3aed'};margin:0;">{votedCount}/3 confirmés</p>
+				<p style="font-family:'Rajdhani',sans-serif;font-size:0.85rem;font-weight:700;color:#64748b;letter-spacing:0.08em;margin:0;">PROGRESSION RÉCOMPENSES</p>
+				<p style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:{allRewardVoted ? '#22c55e' : '#7c3aed'};margin:0;">{rewardVotedCount}/{rewardTotal} confirmés</p>
 			</div>
 			<div style="background:#1a1a2e;border-radius:9999px;height:10px;overflow:hidden;">
 				<div style="
 					height:100%;border-radius:9999px;
-					width:{(votedCount / 3) * 100}%;
-					background:linear-gradient(to right, #7c3aed, {allVoted ? '#22c55e' : '#9f67ff'});
-					box-shadow:0 0 10px {allVoted ? '#22c55e60' : '#7c3aed60'};
+					width:{rewardTotal > 0 ? (rewardVotedCount / rewardTotal) * 100 : 0}%;
+					background:linear-gradient(to right, #7c3aed, {allRewardVoted ? '#22c55e' : '#9f67ff'});
+					box-shadow:0 0 10px {allRewardVoted ? '#22c55e60' : '#7c3aed60'};
 					transition: width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.6s;
 				"></div>
 			</div>
-			<div style="display:flex;justify-content:space-between;margin-top:0.6rem;flex-wrap:wrap;gap:0.3rem;">
-				{#each voteInfo as info}
+			<div style="display:flex;gap:1rem;margin-top:0.6rem;flex-wrap:wrap;">
+				{#each voteInfo.filter(v => v.countsForReward) as info}
 					<div style="display:flex;align-items:center;gap:0.35rem;">
 						<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:{!info.canVote ? info.site.color : '#1e1530'};transition:background 0.3s;"></span>
 						<span style="font-size:0.65rem;color:{!info.canVote ? info.site.color : '#334155'};transition:color 0.3s;">{info.site.label}</span>
 					</div>
 				{/each}
 			</div>
-			{#if allVoted}
-				<p style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:#22c55e;margin:0.6rem 0 0;letter-spacing:0.04em;">
-					✓ Tous les votes confirmés — réclamez vos récompenses ci-dessous !
-				</p>
+			{#if allRewardVoted}
+				<p style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:#22c55e;margin:0.6rem 0 0;letter-spacing:0.04em;">✓ Tous les votes confirmés — réclamez vos récompenses !</p>
 			{/if}
 		</div>
 
@@ -288,7 +270,7 @@
 
 			<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem;">
 				<div>
-					<p style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:#475569;letter-spacing:0.12em;margin:0 0 0.6rem;">PAR VOTE (×3)</p>
+					<p style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:#475569;letter-spacing:0.12em;margin:0 0 0.6rem;">PAR VOTE (×{rewardTotal})</p>
 					<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
 						<div style="background:#7c3aed15;border:1px solid #7c3aed30;border-radius:0.5rem;padding:0.55rem 0.8rem;">
 							<p style="font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:900;color:#a855f7;margin:0;">{VOTE_REWARDS.perVote.xp} XP</p>
@@ -305,7 +287,7 @@
 					</div>
 				</div>
 				<div>
-					<p style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:#22c55e80;letter-spacing:0.12em;margin:0 0 0.6rem;">BONUS 3/3 VOTES</p>
+					<p style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:700;color:#22c55e80;letter-spacing:0.12em;margin:0 0 0.6rem;">BONUS {rewardTotal}/{rewardTotal} VOTES</p>
 					<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
 						<div style="background:#22c55e10;border:1px solid #22c55e30;border-radius:0.5rem;padding:0.55rem 0.8rem;">
 							<p style="font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:900;color:#4ade80;margin:0;">+{VOTE_REWARDS.bonusAll.xp} XP</p>
@@ -335,32 +317,25 @@
 					<p style="color:#334155;font-size:0.85rem;margin:0;">Connectez-vous pour que vos votes soient suivis et les récompenses créditées.</p>
 					<a href="/connexion" style="
 						font-family:'Rajdhani',sans-serif;font-size:0.85rem;font-weight:900;letter-spacing:0.08em;
-						padding:0.55rem 1.25rem;
-						background:#7c3aed20;color:#9f67ff;
-						border:1px solid #7c3aed50;border-radius:0.5rem;
-						text-decoration:none;transition:box-shadow 0.15s;
+						padding:0.55rem 1.25rem;background:#7c3aed20;color:#9f67ff;
+						border:1px solid #7c3aed50;border-radius:0.5rem;text-decoration:none;transition:box-shadow 0.15s;
 					"
 					onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 16px #7c3aed40'; }}
 					onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
 					>CONNEXION</a>
 				</div>
-
 			{:else if claimSuccess}
 				<div style="background:#22c55e12;border:1px solid #22c55e40;border-radius:0.5rem;padding:0.9rem 1rem;">
-					<p style="font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;color:#4ade80;margin:0;">
-						⚡ Récompenses envoyées ! Elles apparaîtront en jeu dans quelques instants.
-					</p>
+					<p style="font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;color:#4ade80;margin:0;">⚡ Récompenses envoyées ! Elles apparaîtront en jeu dans quelques instants.</p>
 				</div>
-
 			{:else if claimError}
 				<div style="background:#ef444412;border:1px solid #ef444440;border-radius:0.5rem;padding:0.9rem 1rem;">
 					<p style="font-family:'Rajdhani',sans-serif;font-size:0.9rem;color:#f87171;margin:0;">{claimError}</p>
 				</div>
-
 			{:else if hasPendingReward}
 				<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
 					<div>
-						<p style="font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;color:#22c55e;margin:0 0 0.1rem;">🎉 3/3 votes confirmés !</p>
+						<p style="font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;color:#22c55e;margin:0 0 0.1rem;">🎉 {rewardTotal}/{rewardTotal} votes confirmés !</p>
 						<p style="font-size:0.8rem;color:#475569;margin:0;">Vos récompenses sont prêtes à être réclamées.</p>
 					</div>
 					<button
@@ -371,25 +346,18 @@
 							padding:0.65rem 1.75rem;
 							background:linear-gradient(135deg, #7c3aed, #22c55e);
 							color:white;border:none;border-radius:0.5rem;cursor:pointer;
-							box-shadow:0 0 20px #7c3aed50;
-							opacity:{claiming ? 0.65 : 1};
+							box-shadow:0 0 20px #7c3aed50;opacity:{claiming ? 0.65 : 1};
 							transition:opacity 0.2s, box-shadow 0.2s;
 						"
 						onmouseenter={(e) => { if (!claiming) (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px #7c3aed70'; }}
 						onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 20px #7c3aed50'; }}
-					>
-						{claiming ? 'RÉCLAMATION…' : '⚡ RÉCLAMER MES RÉCOMPENSES'}
-					</button>
+					>{claiming ? 'RÉCLAMATION…' : '⚡ RÉCLAMER MES RÉCOMPENSES'}</button>
 				</div>
-
-			{:else if allVoted}
-				<p style="font-size:0.85rem;color:#475569;margin:0;">
-					Votes confirmés — en attente de la synchronisation. Réessayez dans quelques instants.
-				</p>
-
 			{:else}
 				<p style="font-size:0.85rem;color:#334155;margin:0;">
-					Votez et faites confirmer les 3 sites pour débloquer le bouton de réclamation.
+					{allRewardVoted
+						? 'Votes confirmés — synchronisation en cours, réessayez dans quelques instants.'
+						: `Votez et faites confirmer les ${rewardTotal} sites trackables pour débloquer le bouton de réclamation.`}
 				</p>
 			{/if}
 		</div>
@@ -400,9 +368,9 @@
 			<div>
 				<p style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:700;color:#475569;letter-spacing:0.05em;margin:0 0 0.2rem;">COMMENT ÇA MARCHE ?</p>
 				<p style="font-size:0.78rem;color:#334155;margin:0;line-height:1.55;">
-					Connectez-vous, cliquez <strong style="color:#64748b;">VOTER</strong> pour chaque site, entrez votre pseudo Minecraft et validez.
-					Le site de vote envoie alors une confirmation automatique — votre statut passe à <strong style="color:#64748b;">✓ VOTE CONFIRMÉ</strong> (quelques secondes).
-					Une fois les 3 confirmés, le bouton <strong style="color:#64748b;">Réclamer</strong> s'active.
+					Connectez-vous, cliquez <strong style="color:#64748b;">VOTER</strong>, entrez votre pseudo Minecraft sur le site et validez.
+					Le statut passe à <strong style="color:#64748b;">✓ VOTE CONFIRMÉ</strong> automatiquement (quelques secondes).
+					Une fois les <strong style="color:#64748b;">{rewardTotal} sites</strong> confirmés, le bouton Réclamer s'active.
 				</p>
 			</div>
 		</div>
