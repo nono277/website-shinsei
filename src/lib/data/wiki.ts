@@ -36,6 +36,16 @@ export const commandCategories: CommandCategory[] = [
 		],
 	},
 	{
+		id: 'quetes', label: 'Quêtes & Découverte', icon: '📜', color: '#a78bfa',
+		commands: [
+			{ cmd: '/quest', desc: "Ouvrir le journal des quêtes (ou le bouton QUÊTES dans l'inventaire). Une quête principale + 9 secondaires, récompenses en éclats et en argent." },
+			{ cmd: 'Suivre une quête', desc: "Clique une quête pour l'épingler dans ta barre latérale et suivre ta progression en direct." },
+			{ cmd: '/guide', desc: "Recevoir le Manuel de l'Éveillé (livre d'accueil, remis à la première connexion)." },
+			{ cmd: '/spawn [ville]', desc: "Voyager vers les hubs de villes du serveur." },
+			{ cmd: 'Parler aux habitants', desc: "Clic droit sur les PNJ de Tokyo pour découvrir leurs histoires et faire progresser tes quêtes." },
+		],
+	},
+	{
 		id: 'guilde', label: 'Guildes', icon: '🛡️', color: '#06b6d4',
 		commands: [
 			{ cmd: '/guilde creer <nom> <tag>', desc: "Fonder une guilde." },

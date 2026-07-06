@@ -7,12 +7,24 @@
 	// La 1re entrée est considérée comme la version ACTUELLE.
 	const changelog: ChangelogEntry[] = [
 		{
-			version: 'v1.0.5', date: '5 juillet 2026',
+			version: 'v1.0.7', date: '6 juillet 2026',
+			changes: [
+				'Système de quêtes complet : ouvre le journal avec /quest ou le bouton QUÊTES dans l\'inventaire. Une quête principale et 9 secondaires, avec récompenses en éclats et en argent.',
+				'Suivi de quête : clique une quête pour l\'épingler dans ta barre latérale et voir ta progression en direct. Notification quand une quête est terminée, et badge doré quand une récompense est à réclamer.',
+				'PNJ de Tokyo : 15 habitants qui racontent leur histoire (clic droit) et des PNJ de service au spawn (marché, compétences, statistiques, guilde, faction).',
+				'Manuel de l\'Éveillé : un livre d\'accueil rassemblant toutes les infos essentielles, remis à la première connexion (ou via /guide).',
+				'Première connexion repensée : intro cinématique, parcours guidé difficulté → classe, célébration à l\'éveil.',
+				'Messages de WorldGuard et EssentialsX traduits en français. Fini le « starter pack » imposé par les mods.',
+				'Barre de vie et liste des joueurs nettoyées des PNJ ; divers ajustements d\'interface.',
+			]
+		},
+		{
+			version: 'v1.0.6', date: '5 juillet 2026',
 			changes: [
 				'Failles repensées : 2 à 3 ouvertes en même temps dans l\'heure, à des coordonnées aléatoires sur la map ou dans les grandes villes via /faille ouvrir (Tokyo, Paris…). À Tokyo, faille de grade F obligatoire ; grade aléatoire ailleurs.',
 				'Zone de départ (1000 blocs) : densité de monstres augmentée, et correction des mobs de haut tier affichés au mauvais niveau (ex. Siegler qui apparaissait en Nv 21 alors qu\'il est catégorisé 70).',
 				'Blocs flottants de retour autour des failles.',
-				'Une seule barre de vie sur les monstres de faille (fin du doublon barre mod / barre custom).',
+				'Une seule barre de vie sur les monstres : les barres des mods (Neat & SLU) sont coupées, y compris sur les mobs moddés (Alex\'s Mobs…) — seule la barre custom reste.',
 				'Au-dessus des autres joueurs : Pseudo · Grade · Niveau, centré et coloré selon le grade (fini le simple « Joueur »).',
 				'Tête de mort ☠ pour les gros tueurs : 15 joueurs éliminés dans la même session (spawnkill compris), remise à zéro à la déconnexion. Notification message + texte à l\'écran + son à l\'obtention.',
 				'XP PvP indexée sur le niveau de l\'adversaire : haut niveau = gros gain, bas niveau = presque rien.',
@@ -114,7 +126,7 @@
 		</a>
 
 		<div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:center;">
-			{#each ['v1.0.5', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
+			{#each ['v1.0.7', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
 				{#if i > 0}<span style="width:3px; height:3px; border-radius:50%; background:#374151;"></span>{/if}
 				<span class="label-mono" style="color:#4b5563;">{item}</span>
 			{/each}

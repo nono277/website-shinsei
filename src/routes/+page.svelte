@@ -82,16 +82,16 @@
 
 	// Dernière mise à jour mise en avant sur l'accueil (voir /telecharger pour le changelog complet).
 	const latestUpdate = {
-		version: 'v1.0.5',
-		date: '5 JUILLET 2026',
-		title: 'Failles multi-villes, PvP & monde vivant',
-		intro: "La plus grosse mise à jour de contenu : des failles dans les grandes villes, une zone de départ plus vivante, un PvP repensé avec tête de mort et anti-farm, et une interface plus propre.",
+		version: 'v1.0.7',
+		date: '6 JUILLET 2026',
+		title: 'Quêtes, PNJ vivants & Manuel de l\'Éveillé',
+		intro: "Un vrai fil d'aventure : un système de quêtes complet, des habitants qui peuplent Tokyo, un livre d'accueil pour bien démarrer et une première connexion repensée.",
 		highlights: [
-			'Failles jusqu\'à 3 en même temps, aléatoires ou dans les villes (Tokyo = faille F).',
-			'Zone de départ : plus de monstres et des niveaux enfin corrects.',
-			'Au-dessus des joueurs : Pseudo · Grade · Niveau + tête de mort ☠ dès 15 kills/session.',
-			'XP PvP selon le niveau de l\'adversaire + anti-farm entre amis.',
-			'Blocs flottants des failles de retour, barres de vie et particules nettoyées.',
+			'Système de quêtes : /quest ou le bouton QUÊTES dans l\'inventaire — 1 principale + 9 secondaires, récompenses en éclats et en argent.',
+			'Suivi de quête épinglé dans la barre latérale, notification de fin et badge « à réclamer ».',
+			'15 habitants à dialogues dans Tokyo + PNJ de service au spawn (marché, compétences, guilde, faction).',
+			'Manuel de l\'Éveillé remis à la première connexion (ou via /guide).',
+			'Première connexion repensée + messages WorldGuard & EssentialsX en français.',
 		],
 	};
 </script>
