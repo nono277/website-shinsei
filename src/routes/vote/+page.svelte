@@ -87,6 +87,7 @@
 	}
 
 	function handleVote(key: SiteKey, url: string): void {
+		console.log(`[vote] click ${key} — user=${data.user?.username ?? 'NON CONNECTÉ'}`);
 		if (data.user) {
 			clickedAt    = { ...clickedAt, [key]: Date.now() };
 			pendingClick = new Set([...pendingClick, key]);
