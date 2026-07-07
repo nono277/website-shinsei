@@ -4,7 +4,6 @@
 
 	let loaded = $state(false);
 	let error  = $state(false);
-	let mixedContent = $state(false);
 
 	// Failles live (bandeau) : nombre en cours + compte à rebours de la prochaine ouverture.
 	let faillesEnCours    = $state(0);
@@ -34,12 +33,6 @@
 	const TIMEOUT_MS = 15_000;
 
 	onMount(() => {
-		// Iframe HTTP bloqué par le navigateur dans un contexte HTTPS → redirection directe
-		if (window.location.protocol === 'https:' && PUBLIC_DYNMAP_URL.startsWith('http:')) {
-			window.location.href = PUBLIC_DYNMAP_URL;
-			return;
-		}
-
 		fetchStats();
 		const statsInterval = setInterval(fetchStats, 30_000);
 		const tick          = setInterval(() => (now = Date.now()), 1000);
@@ -81,22 +74,20 @@
 		</div>
 	</div>
 
-	<!-- Iframe Dynmap (uniquement si pas de mixed content) -->
-	{#if !mixedContent}
-		<iframe
-			src={PUBLIC_DYNMAP_URL}
-			title="Carte Dynmap SHINSEI"
-			style="
-				width: 100%; height: 100%; border: none; display: block;
-				opacity: {loaded ? 1 : 0}; transition: opacity 0.4s;
-			"
-			onload={() => loaded = true}
-			onerror={() => error = true}
-		></iframe>
-	{/if}
+	<!-- Iframe Dynmap -->
+	<iframe
+		src={PUBLIC_DYNMAP_URL}
+		title="Carte Dynmap SHINSEI"
+		style="
+			width: 100%; height: 100%; border: none; display: block;
+			opacity: {loaded ? 1 : 0}; transition: opacity 0.4s;
+		"
+		onload={() => loaded = true}
+		onerror={() => error = true}
+	></iframe>
 
 	<!-- Chargement -->
-	{#if !loaded && !error && !mixedContent}
+	{#if !loaded && !error}
 		<div style="
 			position: absolute; inset: 0; display: flex; flex-direction: column;
 			align-items: center; justify-content: center; gap: 1rem;
@@ -108,39 +99,6 @@
 				animation: spin 0.8s linear infinite;
 			"></div>
 			<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; color: #475569; letter-spacing: 0.1em;">CHARGEMENT DE LA CARTE…</p>
-		</div>
-	{/if}
-
-	<!-- Mixed content : iframe HTTP bloqué en HTTPS -->
-	{#if mixedContent}
-		<div style="
-			position: absolute; inset: 0; display: flex; flex-direction: column;
-			align-items: center; justify-content: center; gap: 1rem;
-			background: #050508;
-		">
-			<p style="font-size: 2.5rem;">🗺️</p>
-			<p style="font-family:'Rajdhani',sans-serif; font-size: 1.1rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.06em;">CARTE DISPONIBLE EN ACCÈS DIRECT</p>
-			<p style="font-size: 0.8rem; color: #475569; text-align: center; max-width: 360px; line-height: 1.6;">
-				La carte ne peut pas être intégrée ici pour des raisons de sécurité.<br>Ouvre-la dans un nouvel onglet.
-			</p>
-			<a href={PUBLIC_DYNMAP_URL} target="_blank" rel="noopener noreferrer" style="
-				margin-top: 0.5rem;
-				display: flex; align-items: center; gap: 0.5rem;
-				background: #7c3aed; color: white; text-decoration: none;
-				font-family:'Share Tech Mono',monospace; font-size: 0.75rem; letter-spacing: 0.08em;
-				padding: 0.65rem 1.4rem; border-radius: 0.5rem;
-				transition: background 0.2s;
-			"
-				onmouseenter={(e) => (e.currentTarget as HTMLElement).style.background = '#6d28d9'}
-				onmouseleave={(e) => (e.currentTarget as HTMLElement).style.background = '#7c3aed'}
-			>
-				<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-					<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-					<polyline points="15 3 21 3 21 9"/>
-					<line x1="10" y1="14" x2="21" y2="3"/>
-				</svg>
-				OUVRIR LA CARTE
-			</a>
 		</div>
 	{/if}
 
