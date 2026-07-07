@@ -100,6 +100,7 @@
 	function startFastPoll(): void {
 		if (fastPollActive) return;
 		fastPollActive = true;
+		refreshStatus(); // vérification immédiate dès le clic
 		let count = 0;
 		const id = setInterval(async () => {
 			count++;
@@ -143,9 +144,9 @@
 		const clockTimer = setInterval(() => { now = Date.now(); }, 1000);
 		const slowPoll   = data.user ? setInterval(refreshStatus, 30_000) : null;
 
-		// Poll immédiat quand l'utilisateur revient sur l'onglet après avoir voté
+		// Poll immédiat quand l'utilisateur revient sur l'onglet
 		function onVisibility() {
-			if (document.visibilityState === 'visible' && fastPollActive) refreshStatus();
+			if (document.visibilityState === 'visible' && data.user) refreshStatus();
 		}
 		document.addEventListener('visibilitychange', onVisibility);
 
