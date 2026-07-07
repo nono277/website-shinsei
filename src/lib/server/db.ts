@@ -31,10 +31,10 @@ db.exec(`
 // Migration : ajoute next_vote_at si la colonne n'existe pas encore
 try { db.exec('ALTER TABLE vote_records ADD COLUMN next_vote_at INTEGER'); } catch { /* déjà présente */ }
 
-// Migration : backfill vote_history depuis vote_records (votes avant l'ajout de la table historique)
+// Migration : backfill vote_history depuis vote_records (ID déterministe = idempotent)
 db.exec(`
 	INSERT OR IGNORE INTO vote_history (id, username, site, voted_at)
-	SELECT lower(hex(randomblob(16))), username, site, voted_at FROM vote_records;
+	SELECT 'backfill-' || username || '-' || site, username, site, voted_at FROM vote_records;
 `);
 
 export default db;

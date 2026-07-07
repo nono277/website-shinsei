@@ -61,7 +61,6 @@ export const load: PageServerLoad = async () => {
 	}
 
 	const topVoters = getTopVoters(30);
-	console.log('[classement] topVoters:', JSON.stringify(topVoters));
 
 	return { leaderboard: data, topVoters };
 };
