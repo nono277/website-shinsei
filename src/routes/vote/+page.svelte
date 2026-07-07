@@ -165,6 +165,19 @@
 <div style="min-height: 100vh; background: #06060f; padding-top: 80px; padding-bottom: 60px;">
 	<div style="max-width: 960px; margin: 0 auto; padding: 0 1.5rem;">
 
+		<!-- Bannière login -->
+		{#if !data.user}
+			<div style="margin-bottom:1.5rem;padding:0.85rem 1.25rem;background:#ef444412;border:1px solid #ef444440;border-radius:0.75rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;">
+				<p style="color:#f87171;font-size:0.875rem;margin:0;">⚠️ Tu n'es pas connecté — les votes ne seront pas suivis et tu ne recevras pas de récompenses.</p>
+				<a href="/connexion" style="font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:900;letter-spacing:0.08em;padding:0.4rem 1rem;background:#7c3aed;color:white;border-radius:0.375rem;text-decoration:none;white-space:nowrap;">SE CONNECTER</a>
+			</div>
+		{:else}
+			<div style="margin-bottom:1.5rem;padding:0.6rem 1rem;background:#7c3aed12;border:1px solid #7c3aed30;border-radius:0.75rem;display:flex;align-items:center;gap:0.6rem;">
+				<img src="https://mc-heads.net/avatar/{data.user.username}/20" alt="" style="width:20px;height:20px;border-radius:3px;image-rendering:pixelated;" />
+				<p style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:#7c3aed;margin:0;">Connecté · votes suivis pour <strong style="color:#a855f7;">{data.user.username}</strong></p>
+			</div>
+		{/if}
+
 		<!-- Header -->
 		<div style="text-align: center; margin-bottom: 3rem; padding-top: 1rem;">
 			<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; color: #7c3aed; letter-spacing: 0.2em; margin: 0 0 0.4rem;">SOUTENEZ LE SERVEUR</p>
