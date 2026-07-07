@@ -17,8 +17,7 @@
 				{
 					title: '1. Éditeur du site',
 					content: `Le site <strong style="color:#e2e8f0;">playshinsei.fr</strong> est édité par :<br/><br/>
-					<strong style="color:#e2e8f0;">NoPleyZz</strong> — Fondateur<br/>
-					<strong style="color:#e2e8f0;">Avinc</strong> — Co-fondateur & Responsable Marketing<br/><br/>
+					<strong style="color:#e2e8f0;">NoPleyZz</strong> — Fondateur<br/><br/>
 					Contact : <a href="mailto:shinsei.serv@gmail.com" style="color:#7c3aed;">shinsei.serv@gmail.com</a>`
 				},
 				{
