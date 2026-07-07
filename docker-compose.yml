@@ -17,3 +17,9 @@ services:
       #   ADDRESS_HEADER=cf-connecting-ip   (et retirer XFF_DEPTH) — non usurpable.
       - ADDRESS_HEADER=x-forwarded-for
       - XFF_DEPTH=1
+      - DB_PATH=/data/votes.db
+    volumes:
+      - votes_data:/data
+
+volumes:
+  votes_data:

@@ -25,3 +25,8 @@ vite.config.ts.timestamp-*
 # Local & dist
 *.local
 dist/
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
