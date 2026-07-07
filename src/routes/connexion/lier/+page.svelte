@@ -63,6 +63,7 @@
 					type="text"
 					placeholder="Ton nom Minecraft (ex: Notch)"
 					maxlength="16"
+					autocomplete="off"
 					required
 					style="
 						width:100%;padding:0.875rem 1rem;
