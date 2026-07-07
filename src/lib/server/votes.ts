@@ -53,7 +53,7 @@ export async function checkAndRecordMinecraftMpVote(username: string): Promise<b
 	return true;
 }
 
-export async function checkAndRecordTopServeursVote(username: string): Promise<boolean> {
+export async function checkAndRecordTopServeursVote(username: string, clientIp: string): Promise<boolean> {
 	const siteKey: SiteKey = 'top-serveurs';
 	const key = userKey(username);
 
@@ -61,15 +61,15 @@ export async function checkAndRecordTopServeursVote(username: string): Promise<b
 	if (rec && Date.now() < rec.voted_at + VOTE_SITES[siteKey].cooldownMs) return false;
 
 	try {
-		const token  = encodeURIComponent(TOP_SERVEURS_API_KEY);
-		const pseudo = encodeURIComponent(username);
-		const url    = `https://api.top-serveurs.net/v1/votes/check?token=${token}&server_token=${token}&pseudo=${pseudo}&playername=${pseudo}`;
-		const res    = await fetch(url, { signal: AbortSignal.timeout(5000) });
-		const body   = await res.text();
-		console.log(`[top-serveurs] ${username} → HTTP ${res.status} : ${body}`);
+		const token = encodeURIComponent(TOP_SERVEURS_API_KEY);
+		const ip    = encodeURIComponent(clientIp);
+		const url   = `https://api.top-serveurs.net/v1/votes/check-ip?server_token=${token}&ip=${ip}`;
+		const res   = await fetch(url, { signal: AbortSignal.timeout(5000) });
+		const body  = await res.text();
+		console.log(`[top-serveurs] ip=${clientIp} → HTTP ${res.status} : ${body}`);
 		if (!res.ok) return false;
 		if (JSON.parse(body).success !== true) return false;
-	} catch (e) { console.error(`[top-serveurs] ${username} → FETCH ERROR:`, e); return false; }
+	} catch (e) { console.error(`[top-serveurs] ip=${clientIp} → FETCH ERROR:`, e); return false; }
 
 	recordVote(username, siteKey);
 	return true;

@@ -25,8 +25,7 @@ export const VOTE_SITES = {
 		cooldownMs: 2 * 60 * 60 * 1000,
 		color: '#f59e0b',
 		period: 'Toutes les 2h',
-		verifyBy: 'username' as const,
-		urlParam: 'pseudo' as const,
+		verifyBy: 'ip' as const,
 	},
 	'serveurs-minecraft': {
 		label: 'Serveurs-Minecraft.org',

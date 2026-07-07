@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
 
 	const [r1, r2, r3, r4] = await Promise.allSettled([
 		checkAndRecordMinecraftMpVote(username),
-		checkAndRecordTopServeursVote(username),
+		clientIp ? checkAndRecordTopServeursVote(username, clientIp) : Promise.resolve(false),
 		clientIp ? checkAndRecordServeursMcVote(username, clientIp) : Promise.resolve(false),
 		clientIp ? checkAndRecordServeursMinecraftOrgVote(username, clientIp) : Promise.resolve(false),
 	]);
