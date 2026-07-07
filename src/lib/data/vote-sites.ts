@@ -3,10 +3,9 @@ export const MINECRAFT_MP_API_KEY = '84STfIGkEZnlwTVOBjtQQ7LDNfYvyypdoX6';
 export const TOP_SERVEURS_API_KEY = 'EIN76KAEIFKAYQ';
 
 // Vérification par IP — aucun token ni callback nécessaire.
-export const SERVEURS_MC_SERVER_ID     = '63991'; // serveurs-minecraft.org
 export const SERVEURS_MC_ORG_SERVER_ID = '7652';  // serveursminecraft.org
 
-export const REWARD_SITES = ['minecraft-mp', 'top-serveurs', 'serveurs-minecraft', 'serveursminecraft'] as const;
+export const REWARD_SITES = ['minecraft-mp', 'top-serveurs', 'serveursminecraft'] as const;
 export type RewardSiteKey = typeof REWARD_SITES[number];
 
 export const VOTE_SITES = {
@@ -25,14 +24,6 @@ export const VOTE_SITES = {
 		cooldownMs: 2 * 60 * 60 * 1000,
 		color: '#f59e0b',
 		period: 'Toutes les 2h',
-		verifyBy: 'ip' as const,
-	},
-	'serveurs-minecraft': {
-		label: 'Serveurs-Minecraft.org',
-		url: 'http://www.serveurs-minecraft.org/vote.php?id=63991',
-		cooldownMs: 24 * 60 * 60 * 1000,
-		color: '#a855f7',
-		period: 'Toutes les 24h',
 		verifyBy: 'ip' as const,
 	},
 	'serveursminecraft': {

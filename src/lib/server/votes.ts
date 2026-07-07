@@ -1,7 +1,7 @@
 import db from './db';
 import {
 	VOTE_SITES, REWARD_SITES,
-	MINECRAFT_MP_API_KEY, TOP_SERVEURS_API_KEY, SERVEURS_MC_SERVER_ID, SERVEURS_MC_ORG_SERVER_ID,
+	MINECRAFT_MP_API_KEY, TOP_SERVEURS_API_KEY, SERVEURS_MC_ORG_SERVER_ID,
 	type SiteKey, type RewardSiteKey,
 } from '$lib/data/vote-sites';
 
@@ -18,10 +18,6 @@ const stmtCountPending   = db.prepare<[string], { n: number }>('SELECT COUNT(*) 
 const stmtTopVoters      = db.prepare<[number], { username: string; votes: number }>(
 	'SELECT username, COUNT(*) AS votes FROM vote_history WHERE voted_at >= ? GROUP BY username ORDER BY votes DESC LIMIT 10'
 );
-
-// Cache IP → { result, cachedAt } pour respecter le quota serveurs-minecraft.org (1 req/s)
-const ipVoteCache = new Map<string, { votes: number; cachedAt: number; lastVoteAt: number }>();
-const IP_CACHE_TTL = 30_000;
 
 function userKey(username: string) { return username.toLowerCase(); }
 
@@ -95,45 +91,6 @@ export async function checkAndRecordTopServeursVote(username: string, clientIp: 
 	} catch (e) { console.error(`[top-serveurs] ip=${clientIp} → FETCH ERROR:`, e); return false; }
 
 	return true;
-}
-
-export async function checkAndRecordServeursMcVote(username: string, clientIp: string): Promise<boolean> {
-	const siteKey: SiteKey = 'serveurs-minecraft';
-	const key = userKey(username);
-
-	const rec = stmtGetRecord.get(key, siteKey);
-	if (rec && !isExpired(rec, siteKey)) return false;
-
-	const result = await checkServeursMcByIp(clientIp);
-	if (!result) return false;
-
-	// nextVoteAt = heure exacte du vote + cooldown en heures depuis l'API
-	recordVote(username, siteKey, result.nextVoteAt);
-	return true;
-}
-
-async function checkServeursMcByIp(ip: string): Promise<{ nextVoteAt: number } | null> {
-	const cached = ipVoteCache.get(ip);
-	if (cached && Date.now() - cached.cachedAt < IP_CACHE_TTL) {
-		console.log(`[srv-mc] ip=${ip} → cache hit votes=${cached.votes}`);
-		return cached.votes > 0 ? { nextVoteAt: cached.lastVoteAt + 24 * 3_600_000 } : null;
-	}
-
-	try {
-		const url = `http://www.serveurs-minecraft.org/api/is_valid_vote.php?id=${SERVEURS_MC_SERVER_ID}&ip=${encodeURIComponent(ip)}&duration=24&format=json`;
-		const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
-		const body = await res.text();
-		console.log(`[srv-mc] ip=${ip} → HTTP ${res.status} : ${body}`);
-		if (!res.ok) return null;
-		const data = JSON.parse(body);
-		const votes = parseInt(data.votes ?? '0', 10);
-		// lastVoteDate UTC + duration (heures) = prochain vote exact
-		const lastVoteAt = data.lastVoteDate ? new Date(data.lastVoteDate + ' UTC').getTime() : Date.now();
-		const durationH  = typeof data.duration === 'number' ? data.duration : 24;
-		const nextVoteAt = lastVoteAt + durationH * 3_600_000;
-		ipVoteCache.set(ip, { votes, cachedAt: Date.now(), lastVoteAt });
-		return votes > 0 ? { nextVoteAt } : null;
-	} catch (e) { console.error(`[srv-mc] ip=${ip} → FETCH ERROR:`, e); return null; }
 }
 
 export async function checkAndRecordServeursMinecraftOrgVote(username: string, clientIp: string): Promise<boolean> {
