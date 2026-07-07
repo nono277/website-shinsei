@@ -557,7 +557,9 @@
 
 		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1.5rem;max-width:1000px;margin:0 auto;" class="sm:grid-cols-2 lg:grid-cols-3">
 			{#each [
-				{ username: 'NoPleyZz',  role: 'Fondateur · Développeur principal',   color: '#f59e0b', badge: 'FOUNDER',    desc: "Créateur de SHINSEI et développeur principal. Conception du site, du launcher, du serveur et des mods — l'architecte technique derrière tout l'univers." },
+				{ username: 'NoPleyZz',  role: 'Fondateur · Développeur principal',         color: '#f59e0b', badge: 'FOUNDER',    desc: "Créateur de SHINSEI et développeur principal. Conception du site, du launcher, du serveur et des mods — l'architecte technique derrière tout l'univers." },
+				{ username: 'MrRat45',   role: 'Responsable Discord · Partenariat',        color: '#5865f2', badge: 'DISCORD',    desc: "Responsable de la communauté Discord et des partenariats. Gestion des relations avec Breath of Legends et les serveurs partenaires de SHINSEI." },
+				{ username: 'Metaliz_91', role: 'Modérateur',                              color: '#22c55e', badge: 'MOD',        desc: "Modérateur de la communauté SHINSEI. Veille au bon déroulement des échanges et au respect des règles sur le serveur et le Discord." },
 			] as member}
 				<div style="
 					background:#0f0f1a;border:1px solid {member.color}30;border-radius:1rem;
