@@ -8,7 +8,7 @@
 
 	let me = $derived(page.data.user?.username ?? null);
 
-	type Tab = 'xp' | 'pvp' | 'donjons' | 'failles';
+	type Tab = 'xp' | 'pvp' | 'donjons' | 'failles' | 'votes';
 	let activeTab = $state<Tab>('xp');
 
 	const tabs: { id: Tab; label: string; icon: string; unit: string }[] = [
@@ -16,6 +16,7 @@
 		{ id: 'pvp',     label: 'PvP',      icon: '⚔️', unit: 'kills'   },
 		{ id: 'donjons', label: 'Donjons',  icon: '🏯', unit: 'donjons' },
 		{ id: 'failles', label: 'Failles',  icon: '🌀', unit: 'failles' },
+		{ id: 'votes',   label: 'Votes',    icon: '🗳️', unit: 'votes'   },
 	];
 
 	const gradeColor = (id: string) =>
@@ -32,7 +33,8 @@
 		}
 	}
 
-	let entries = $derived(data.leaderboard ? data.leaderboard[activeTab] : []);
+	let entries = $derived(activeTab !== 'votes' && data.leaderboard ? data.leaderboard[activeTab as Exclude<Tab, 'votes'>] : []);
+	let voteEntries = $derived(data.topVoters ?? []);
 	let currentUnit = $derived(tabs.find(t => t.id === activeTab)?.unit ?? '');
 
 	function statValue(entry: any): number {
@@ -84,7 +86,99 @@
 			{/each}
 		</div>
 
-		{#if !data.leaderboard}
+		{#if activeTab === 'votes'}
+			<!-- Classement votes -->
+			{#if voteEntries.length === 0}
+				<div style="text-align: center; padding: 5rem 0;">
+					<p style="font-size: 2.5rem; margin-bottom: 1rem;">🗳️</p>
+					<p style="font-family:'Rajdhani',sans-serif; font-size: 1.1rem; font-weight: 700; color: #475569; letter-spacing: 0.06em;">AUCUN VOTE ENREGISTRÉ</p>
+					<p style="color: #334155; font-size: 0.8rem; margin-top: 0.4rem;">Sois le premier à voter sur <a href="/vote" style="color:#7c3aed;">la page vote</a> !</p>
+				</div>
+			{:else}
+				<!-- Podium top 3 votes -->
+				{#if voteEntries.length >= 3}
+					<div style="display: flex; align-items: flex-end; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; flex-wrap: wrap;">
+						{#each PODIUM_ORDER as pos}
+							{#if voteEntries[pos]}
+								{@const voter = voteEntries[pos]}
+								{@const isFirst = pos === 0}
+								{@const isPodiumMe = me !== null && voter.username === me}
+								<div style="
+									display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+									background: {isPodiumMe ? '#7c3aed18' : '#0f0f1a'}; border: 1px solid {isPodiumMe ? '#7c3aed80' : PODIUM_COLORS[pos] + '40'};
+									border-radius: 0.75rem; padding: {isFirst ? '1.75rem 1.75rem' : '1.25rem 1.5rem'};
+									min-width: 150px;
+									box-shadow: 0 0 24px {PODIUM_GLOW[pos]};
+									transform: translateY({isFirst ? '0' : '12px'});
+								">
+									<span style="font-size: {isFirst ? '2rem' : '1.5rem'}; line-height: 1;">{MEDAL[pos]}</span>
+									<div style="
+										width: {isFirst ? '56px' : '44px'}; height: {isFirst ? '56px' : '44px'};
+										border-radius: 0.5rem; overflow: hidden;
+										border: 2px solid {PODIUM_COLORS[pos]}80; background: #06060f;
+									">
+										<img
+											src="https://mc-heads.net/avatar/{voter.username}/56"
+											alt={voter.username}
+											style="width: 100%; height: 100%; image-rendering: pixelated;"
+										/>
+									</div>
+									<p style="font-family:'Rajdhani',sans-serif; font-size: {isFirst ? '1rem' : '0.875rem'}; font-weight: 700; color: white; margin: 0;">{voter.username}</p>
+									<p style="font-family:'Share Tech Mono',monospace; font-size: {isFirst ? '1rem' : '0.875rem'}; color: {PODIUM_COLORS[pos]}; font-weight: 700; margin: 0;">
+										{voter.votes} <span style="font-size: 0.65em; opacity: 0.7;">votes</span>
+									</p>
+								</div>
+							{/if}
+						{/each}
+					</div>
+				{/if}
+
+				<!-- Liste rang 4+ -->
+				{#if voteEntries.length > 3}
+					<div style="background: #0a0a14; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
+						<table style="width: 100%; border-collapse: collapse;">
+							<thead>
+								<tr style="border-bottom: 1px solid #1e1530;">
+									<th style="padding: 0.75rem 1rem; text-align: left; font-family:'Rajdhani',sans-serif; font-size: 0.7rem; font-weight: 700; color: #475569; letter-spacing: 0.1em; width: 48px;">#</th>
+									<th style="padding: 0.75rem 1rem; text-align: left; font-family:'Rajdhani',sans-serif; font-size: 0.7rem; font-weight: 700; color: #475569; letter-spacing: 0.1em;">JOUEUR</th>
+									<th style="padding: 0.75rem 1rem; text-align: right; font-family:'Rajdhani',sans-serif; font-size: 0.7rem; font-weight: 700; color: #475569; letter-spacing: 0.1em;">VOTES</th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each voteEntries.slice(3) as voter, i}
+									{@const isMe = me !== null && voter.username === me}
+									<tr
+										style="
+											border-bottom: 1px solid #1e153040; transition: background 0.15s;
+											background: {isMe ? '#7c3aed15' : 'transparent'};
+											border-left: {isMe ? '3px solid #7c3aed' : '3px solid transparent'};
+										"
+										onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.background = isMe ? '#7c3aed25' : '#7c3aed08'; }}
+										onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.background = isMe ? '#7c3aed15' : 'transparent'; }}
+									>
+										<td style="padding: 0.65rem 1rem;">
+											<span style="font-family:'Share Tech Mono',monospace; font-size: 0.8rem; color: #475569; font-weight: 700;">{i + 4}</span>
+										</td>
+										<td style="padding: 0.65rem 1rem;">
+											<div style="display: flex; align-items: center; gap: 0.6rem;">
+												<div style="width: 28px; height: 28px; border-radius: 0.25rem; overflow: hidden; border: 1px solid #1e1530; background: #06060f; flex-shrink: 0;">
+													<img src="https://mc-heads.net/avatar/{voter.username}/28" alt={voter.username} style="width: 100%; height: 100%; image-rendering: pixelated;" />
+												</div>
+												<span style="font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 700; color: {isMe ? '#a855f7' : '#e2e8f0'};">{voter.username}{isMe ? ' (toi)' : ''}</span>
+											</div>
+										</td>
+										<td style="padding: 0.65rem 1rem; text-align: right;">
+											<span style="font-family:'Share Tech Mono',monospace; font-size: 0.875rem; color: #22c55e; font-weight: 700;">{voter.votes}</span>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+			{/if}
+
+		{:else if !data.leaderboard}
 			<!-- Backend hors ligne -->
 			<div style="text-align: center; padding: 5rem 0;">
 				<p style="font-size: 2.5rem; margin-bottom: 1rem;">🌀</p>
