@@ -243,8 +243,10 @@
 							<p style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:#60a5fa;margin:0 0 0.1rem;letter-spacing:0.06em;">⏳ EN ATTENTE</p>
 							<p style="font-size:0.72rem;color:#334155;margin:0;">Ouvert {fmtPending(info.key)}</p>
 						</div>
+					{:else if !data.user}
+						<a href="/connexion" style="display:block;width:100%;box-sizing:border-box;font-family:'Rajdhani',sans-serif;font-size:0.875rem;font-weight:900;letter-spacing:0.1em;padding:0.55rem 1rem;text-align:center;text-decoration:none;background:#1a1a2e;color:#334155;border:1px solid #1e1530;border-radius:0.5rem;">&#x1F512; CONNEXION REQUISE</a>
 					{:else}
-						{#if data.user && VOTE_SITES[info.key].verifyBy === 'username'}
+						{#if VOTE_SITES[info.key].verifyBy === 'username'}
 							<p style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:#475569;margin:0 0 0.45rem;letter-spacing:0.04em;">
 								Pseudo : <span style="color:#94a3b8;font-weight:700;">{data.user.username}</span>
 							</p>
