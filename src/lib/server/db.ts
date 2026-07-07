@@ -7,9 +7,10 @@ db.pragma('synchronous = NORMAL');
 
 db.exec(`
 	CREATE TABLE IF NOT EXISTS vote_records (
-		username  TEXT    NOT NULL,
-		site      TEXT    NOT NULL,
-		voted_at  INTEGER NOT NULL,
+		username     TEXT    NOT NULL,
+		site         TEXT    NOT NULL,
+		voted_at     INTEGER NOT NULL,
+		next_vote_at INTEGER,
 		PRIMARY KEY (username, site)
 	);
 	CREATE TABLE IF NOT EXISTS pending_rewards (
@@ -26,5 +27,8 @@ db.exec(`
 	CREATE INDEX IF NOT EXISTS idx_vote_history_username ON vote_history(username);
 	CREATE INDEX IF NOT EXISTS idx_vote_history_voted_at ON vote_history(voted_at);
 `);
+
+// Migration : ajoute next_vote_at si la colonne n'existe pas encore
+try { db.exec('ALTER TABLE vote_records ADD COLUMN next_vote_at INTEGER'); } catch { /* déjà présente */ }
 
 export default db;
