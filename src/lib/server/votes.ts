@@ -90,17 +90,22 @@ export async function checkAndRecordServeursMcVote(username: string, clientIp: s
 
 async function checkServeursMcByIp(ip: string): Promise<boolean> {
 	const cached = ipVoteCache.get(ip);
-	if (cached && Date.now() - cached.cachedAt < IP_CACHE_TTL) return cached.votes > 0;
+	if (cached && Date.now() - cached.cachedAt < IP_CACHE_TTL) {
+		console.log(`[srv-mc] ip=${ip} → cache hit votes=${cached.votes}`);
+		return cached.votes > 0;
+	}
 
 	try {
 		const url = `http://www.serveurs-minecraft.org/api/is_valid_vote.php?id=${SERVEURS_MC_SERVER_ID}&ip=${encodeURIComponent(ip)}&duration=24&format=json`;
 		const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+		const body = await res.text();
+		console.log(`[srv-mc] ip=${ip} → HTTP ${res.status} : ${body}`);
 		if (!res.ok) return false;
-		const data = await res.json();
+		const data = JSON.parse(body);
 		const votes = parseInt(data.votes ?? '0', 10);
 		ipVoteCache.set(ip, { votes, cachedAt: Date.now() });
 		return votes > 0;
-	} catch { return false; }
+	} catch (e) { console.error(`[srv-mc] ip=${ip} → FETCH ERROR:`, e); return false; }
 }
 
 export async function checkAndRecordServeursMinecraftOrgVote(username: string, clientIp: string): Promise<boolean> {
@@ -113,9 +118,11 @@ export async function checkAndRecordServeursMinecraftOrgVote(username: string, c
 	try {
 		const url = `https://www.serveursminecraft.org/sm_api/peutVoter.php?id=${SERVEURS_MC_ORG_SERVER_ID}&ip=${encodeURIComponent(clientIp)}`;
 		const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+		const body = await res.text();
+		console.log(`[srv-mc-org] ip=${clientIp} → HTTP ${res.status} : ${body}`);
 		if (!res.ok) return false;
-		if ((await res.text()).trim() === 'true') return false; // "true" = peut encore voter = n'a pas voté
-	} catch { return false; }
+		if (body.trim() === 'true') return false; // "true" = peut encore voter = n'a pas voté
+	} catch (e) { console.error(`[srv-mc-org] ip=${clientIp} → FETCH ERROR:`, e); return false; }
 
 	recordVote(username, siteKey);
 	return true;
