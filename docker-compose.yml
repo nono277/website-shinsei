@@ -11,12 +11,7 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      # adapter-node : getClientAddress() doit lire la VRAIE IP du client (sinon = IP du proxy pour
-      # TOUS → détection des sites de vote par IP cassée). Le proxy DOIT renvoyer cet en-tête.
-      # 1 seul proxy nginx devant → XFF_DEPTH=1. Si Cloudflare est en tête, préférer :
-      #   ADDRESS_HEADER=cf-connecting-ip   (et retirer XFF_DEPTH) — non usurpable.
-      - ADDRESS_HEADER=x-forwarded-for
-      - XFF_DEPTH=1
+      # Pas de proxy devant Docker → getClientAddress() lit l'IP du socket TCP directement
       - DB_PATH=/data/votes.db
     volumes:
       - votes_data:/data
