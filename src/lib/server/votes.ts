@@ -25,10 +25,10 @@ const IP_CACHE_TTL = 30_000;
 
 function userKey(username: string) { return username.toLowerCase(); }
 
-export function recordVote(username: string, site: SiteKey): void {
+export function recordVote(username: string, site: SiteKey, votedAt?: number): void {
 	const key = userKey(username);
 	const wasComplete = allRewardSitesVoted(key);
-	const now = Date.now();
+	const now = votedAt ?? Date.now();
 
 	stmtUpsertVote.run(key, site, now);
 	stmtInsertHistory.run(crypto.randomUUID(), key, site, now);
@@ -71,6 +71,7 @@ export async function checkAndRecordTopServeursVote(username: string, clientIp: 
 	const rec = stmtGetRecord.get(key, siteKey);
 	if (rec && Date.now() < rec.voted_at + VOTE_SITES[siteKey].cooldownMs) return false;
 
+	let votedAt: number | undefined;
 	try {
 		const token = encodeURIComponent(TOP_SERVEURS_API_KEY);
 		const ip    = encodeURIComponent(clientIp);
@@ -79,10 +80,15 @@ export async function checkAndRecordTopServeursVote(username: string, clientIp: 
 		const body  = await res.text();
 		console.log(`[top-serveurs] ip=${clientIp} → HTTP ${res.status} : ${body}`);
 		if (!res.ok) return false;
-		if (JSON.parse(body).success !== true) return false;
+		const json = JSON.parse(body);
+		if (json.success !== true) return false;
+		// duration = minutes restantes → on recalcule l'heure exacte du vote
+		if (typeof json.duration === 'number') {
+			votedAt = Date.now() - (VOTE_SITES[siteKey].cooldownMs - json.duration * 60_000);
+		}
 	} catch (e) { console.error(`[top-serveurs] ip=${clientIp} → FETCH ERROR:`, e); return false; }
 
-	recordVote(username, siteKey);
+	recordVote(username, siteKey, votedAt);
 	return true;
 }
 
@@ -93,17 +99,18 @@ export async function checkAndRecordServeursMcVote(username: string, clientIp: s
 	const rec = stmtGetRecord.get(key, siteKey);
 	if (rec && Date.now() < rec.voted_at + VOTE_SITES[siteKey].cooldownMs) return false;
 
-	if (!(await checkServeursMcByIp(clientIp))) return false;
+	const result = await checkServeursMcByIp(clientIp);
+	if (!result) return false;
 
-	recordVote(username, siteKey);
+	recordVote(username, siteKey, result.lastVoteAt);
 	return true;
 }
 
-async function checkServeursMcByIp(ip: string): Promise<boolean> {
+async function checkServeursMcByIp(ip: string): Promise<{ lastVoteAt: number } | null> {
 	const cached = ipVoteCache.get(ip);
 	if (cached && Date.now() - cached.cachedAt < IP_CACHE_TTL) {
 		console.log(`[srv-mc] ip=${ip} → cache hit votes=${cached.votes}`);
-		return cached.votes > 0;
+		return cached.votes > 0 ? { lastVoteAt: cached.cachedAt } : null;
 	}
 
 	try {
@@ -111,12 +118,14 @@ async function checkServeursMcByIp(ip: string): Promise<boolean> {
 		const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
 		const body = await res.text();
 		console.log(`[srv-mc] ip=${ip} → HTTP ${res.status} : ${body}`);
-		if (!res.ok) return false;
+		if (!res.ok) return null;
 		const data = JSON.parse(body);
 		const votes = parseInt(data.votes ?? '0', 10);
+		// lastVoteDate est en UTC : "2026-07-07 11:15:08"
+		const lastVoteAt = data.lastVoteDate ? new Date(data.lastVoteDate + ' UTC').getTime() : Date.now();
 		ipVoteCache.set(ip, { votes, cachedAt: Date.now() });
-		return votes > 0;
-	} catch (e) { console.error(`[srv-mc] ip=${ip} → FETCH ERROR:`, e); return false; }
+		return votes > 0 ? { lastVoteAt } : null;
+	} catch (e) { console.error(`[srv-mc] ip=${ip} → FETCH ERROR:`, e); return null; }
 }
 
 export async function checkAndRecordServeursMinecraftOrgVote(username: string, clientIp: string): Promise<boolean> {
