@@ -56,7 +56,19 @@
 	let rewardVotedCount = $derived(serverStatus?.rewardVotedCount ?? 0);
 	let rewardTotal      = $derived(serverStatus?.rewardTotal ?? REWARD_SITES.length);
 	let allRewardVoted   = $derived(rewardVotedCount >= rewardTotal);
-	let hasPendingReward = $derived((serverStatus?.pendingRewards ?? 0) > 0);
+	let pendingCount     = $derived(serverStatus?.pendingRewards ?? 0);
+	let hasPendingReward = $derived(pendingCount > 0);
+
+	// Top voteurs (classement persistant, backend Minecraft).
+	let topVoters = $state<{ username: string; votes: number }[]>([]);
+	async function loadTopVoters(): Promise<void> {
+		try {
+			const res = await fetch('/api/vote/top');
+			if (!res.ok) return;
+			const j = await res.json();
+			topVoters = Array.isArray(j.top) ? j.top : [];
+		} catch { /* ignore */ }
+	}
 
 	function fmtTime(ms: number): string {
 		if (ms <= 0) return '';
@@ -119,7 +131,7 @@
 		claiming = true; claimError = ''; claimSuccess = false;
 		try {
 			const res = await fetch('/api/vote/claim', { method: 'POST' });
-			if (res.ok) { claimSuccess = true; await refreshStatus(); }
+			if (res.ok) { claimSuccess = true; await refreshStatus(); await loadTopVoters(); }
 			else {
 				const j = await res.json().catch(() => ({}));
 				claimError = j.error ?? 'Erreur lors de la réclamation.';
@@ -129,9 +141,11 @@
 	}
 
 	onMount(() => {
+		loadTopVoters();
 		const clockTimer = setInterval(() => { now = Date.now(); }, 1000);
 		const slowPoll   = data.user ? setInterval(refreshStatus, 30_000) : null;
-		return () => { clearInterval(clockTimer); if (slowPoll) clearInterval(slowPoll); };
+		const topPoll    = setInterval(loadTopVoters, 60_000);
+		return () => { clearInterval(clockTimer); if (slowPoll) clearInterval(slowPoll); clearInterval(topPoll); };
 	});
 </script>
 
@@ -335,8 +349,8 @@
 			{:else if hasPendingReward}
 				<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
 					<div>
-						<p style="font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;color:#22c55e;margin:0 0 0.1rem;">🎉 {rewardTotal}/{rewardTotal} votes confirmés !</p>
-						<p style="font-size:0.8rem;color:#475569;margin:0;">Vos récompenses sont prêtes à être réclamées.</p>
+						<p style="font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;color:#22c55e;margin:0 0 0.1rem;">🎁 {pendingCount} récompense{pendingCount > 1 ? 's' : ''} à réclamer !</p>
+						<p style="font-size:0.8rem;color:#475569;margin:0;">Chaque vote confirmé est réclamable — votez sur les 4 sites pour le bonus.</p>
 					</div>
 					<button
 						onclick={claimRewards}
@@ -355,10 +369,38 @@
 				</div>
 			{:else}
 				<p style="font-size:0.85rem;color:#334155;margin:0;">
-					{allRewardVoted
-						? 'Votes confirmés — synchronisation en cours, réessayez dans quelques instants.'
-						: `Votez et faites confirmer les ${rewardTotal} sites trackables pour débloquer le bouton de réclamation.`}
+					Votez sur un site : la récompense devient réclamable dès qu'il est confirmé (quelques secondes).
+					Les 4 sites confirmés = bonus supplémentaire.
 				</p>
+			{/if}
+		</div>
+
+		<!-- Top voteurs -->
+		<div style="margin-top:1.25rem;background:#0f0f1a;border:1px solid #1e1530;border-radius:0.75rem;padding:1.5rem;">
+			<p style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:#7c3aed;letter-spacing:0.2em;margin:0 0 0.3rem;">CLASSEMENT</p>
+			<h2 style="font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:900;color:white;margin:0 0 1.25rem;letter-spacing:0.03em;">🏆 TOP VOTEURS</h2>
+
+			{#if topVoters.length === 0}
+				<p style="font-size:0.85rem;color:#334155;margin:0;">Aucun vote enregistré pour l'instant — sois le premier !</p>
+			{:else}
+				<div style="display:flex;flex-direction:column;gap:0.4rem;">
+					{#each topVoters as voter, i (voter.username)}
+						{@const medal = ['🥇','🥈','🥉'][i]}
+						{@const podium = ['#f59e0b','#94a3b8','#cd7c2e'][i] ?? '#334155'}
+						{@const isMe = data.user && voter.username.toLowerCase() === data.user.username.toLowerCase()}
+						<div style="
+							display:flex;align-items:center;gap:0.75rem;
+							padding:0.55rem 0.85rem;border-radius:0.5rem;
+							background:{isMe ? '#7c3aed15' : '#ffffff05'};
+							border:1px solid {isMe ? '#7c3aed50' : '#161622'};
+						">
+							<span style="width:1.6rem;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:900;font-size:0.95rem;color:{podium};flex-shrink:0;">{medal ?? i + 1}</span>
+							<img src="https://mc-heads.net/avatar/{voter.username}/24" alt="" style="width:24px;height:24px;border-radius:4px;flex-shrink:0;" loading="lazy" />
+							<span style="flex:1;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:0.95rem;color:{isMe ? '#a855f7' : '#cbd5e1'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{voter.username}{isMe ? ' (toi)' : ''}</span>
+							<span style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:#22c55e;flex-shrink:0;">{voter.votes} vote{voter.votes > 1 ? 's' : ''}</span>
+						</div>
+					{/each}
+				</div>
 			{/if}
 		</div>
 

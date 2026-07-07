@@ -42,7 +42,9 @@ export const VOTE_SITES = {
 
 export type SiteKey = keyof typeof VOTE_SITES;
 
+// Calibré pour ne pas déséquilibrer l'économie : l'ARGENT (seule monnaie de marché) reste modeste
+// car les votes sont quotidiens et répétables. Total ×4 sites + bonus = 1200 XP / 300 $ / 20 éclats / 1 clé.
 export const VOTE_REWARDS = {
-	perVote:  { xp: 500, dollars: 250, eclats: 3 },
-	bonusAll: { xp: 1000, dollars: 500, eclats: 10, cles: 1 },
+	perVote:  { xp: 200, dollars: 50, eclats: 3 },
+	bonusAll: { xp: 400, dollars: 100, eclats: 8, cles: 1 },
 } as const;

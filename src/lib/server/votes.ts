@@ -6,8 +6,17 @@ import {
 
 interface VoteRecord { votedAt: number; }
 
+// Une récompense en attente de réclamation. kind = 'vote' (un vote) ou 'bonus' (les 4 sites).
+export type PendingReward = { id: string; kind: 'vote' | 'bonus' };
+
 const voteStore      = new Map<string, Map<SiteKey, VoteRecord>>();
-const pendingRewards = new Map<string, string[]>();
+const pendingRewards = new Map<string, PendingReward[]>();
+
+function pushPending(key: string, entry: PendingReward): void {
+	const q = pendingRewards.get(key) ?? [];
+	q.push(entry);
+	pendingRewards.set(key, q);
+}
 
 // Cache IP → { result, cachedAt } pour respecter le quota serveurs-minecraft.org (1 req/s)
 const ipVoteCache = new Map<string, { votes: number; cachedAt: number }>();
@@ -16,12 +25,16 @@ const IP_CACHE_TTL = 30_000; // 30s
 export function recordVote(username: string, site: SiteKey): void {
 	const key = username.toLowerCase();
 	if (!voteStore.has(key)) voteStore.set(key, new Map());
+	const wasComplete = allRewardSitesVoted(key);   // état AVANT ce vote
 	voteStore.get(key)!.set(site, { votedAt: Date.now() });
 
-	if (allRewardSitesVoted(key)) {
-		const q = pendingRewards.get(key) ?? [];
-		q.push(crypto.randomUUID());
-		pendingRewards.set(key, q);
+	// Chaque vote confirmé sur un site compté = une récompense « vote » réclamable IMMÉDIATEMENT.
+	if ((REWARD_SITES as readonly string[]).includes(site)) {
+		pushPending(key, { id: crypto.randomUUID(), kind: 'vote' });
+	}
+	// Bonus 4/4 : seulement à la TRANSITION vers « les 4 votés » (pas à chaque re-vote d'un site déjà pris).
+	if (!wasComplete && allRewardSitesVoted(key)) {
+		pushPending(key, { id: crypto.randomUUID(), kind: 'bonus' });
 	}
 }
 
@@ -188,20 +201,19 @@ export async function checkAndRecordServeursMinecraftOrgVote(username: string, c
 	return true;
 }
 
-export function claimReward(username: string): string | null {
-	const key = username.toLowerCase();
-	const q = pendingRewards.get(key);
-	if (!q?.length) return null;
-	const id = q.shift()!;
-	if (!q.length) pendingRewards.delete(key);
-	return id;
+// Récompenses en attente pour un joueur (copie).
+export function getPendingRewards(username: string): PendingReward[] {
+	return [...(pendingRewards.get(username.toLowerCase()) ?? [])];
 }
 
-// Remet une récompense consommée dans la file (si l'appel au backend Minecraft a échoué) —
-// évite de perdre la récompense ; le rewardId étant idempotent côté serveur, aucun risque de double crédit.
-export function requeueReward(username: string, rewardId: string): void {
+// Retire les récompenses livrées (par id). Les échecs restent en file (réclamables au prochain essai) ;
+// les rewardId étant idempotents côté backend, aucun risque de double crédit.
+export function removePendingRewards(username: string, ids: string[]): void {
 	const key = username.toLowerCase();
-	const q = pendingRewards.get(key) ?? [];
-	q.unshift(rewardId);
-	pendingRewards.set(key, q);
+	const q = pendingRewards.get(key);
+	if (!q) return;
+	const idSet = new Set(ids);
+	const rest = q.filter((e) => !idSet.has(e.id));
+	if (rest.length) pendingRewards.set(key, rest);
+	else pendingRewards.delete(key);
 }
