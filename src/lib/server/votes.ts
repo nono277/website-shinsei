@@ -196,3 +196,12 @@ export function claimReward(username: string): string | null {
 	if (!q.length) pendingRewards.delete(key);
 	return id;
 }
+
+// Remet une récompense consommée dans la file (si l'appel au backend Minecraft a échoué) —
+// évite de perdre la récompense ; le rewardId étant idempotent côté serveur, aucun risque de double crédit.
+export function requeueReward(username: string, rewardId: string): void {
+	const key = username.toLowerCase();
+	const q = pendingRewards.get(key) ?? [];
+	q.unshift(rewardId);
+	pendingRewards.set(key, q);
+}

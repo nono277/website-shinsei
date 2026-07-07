@@ -6,6 +6,14 @@ services:
     ports:
       - "3000:3000"
     restart: always
+    env_file:
+      - .env            # secrets Microsoft/Brevo + VOTE_REWARD_TOKEN/URL
     environment:
       - PORT=3000
       - NODE_ENV=production
+      # adapter-node : getClientAddress() doit lire la VRAIE IP du client (sinon = IP du proxy pour
+      # TOUS → détection des sites de vote par IP cassée). Le proxy DOIT renvoyer cet en-tête.
+      # 1 seul proxy nginx devant → XFF_DEPTH=1. Si Cloudflare est en tête, préférer :
+      #   ADDRESS_HEADER=cf-connecting-ip   (et retirer XFF_DEPTH) — non usurpable.
+      - ADDRESS_HEADER=x-forwarded-for
+      - XFF_DEPTH=1
