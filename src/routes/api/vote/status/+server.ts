@@ -20,7 +20,7 @@ export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
 	const username = locals.user.username;
 
 	let clientIp = '';
-	try { clientIp = getClientAddress(); } catch { /* ignore */ }
+	try { clientIp = getClientAddress(); } catch (e) { console.warn('[VOTE] getClientAddress failed:', e); }
 	// En dev, getClientAddress() retourne 127.0.0.1 — les sites de vote ont enregistré
 	// la vraie IP publique, donc la vérification échoue. OVERRIDE_CLIENT_IP permet de tester.
 	if (dev && env.OVERRIDE_CLIENT_IP) clientIp = env.OVERRIDE_CLIENT_IP;
