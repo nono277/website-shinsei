@@ -558,7 +558,7 @@
 		<div style="display:grid;grid-template-columns:repeat(1,1fr);gap:1.5rem;max-width:1000px;margin:0 auto;" class="sm:grid-cols-2 lg:grid-cols-3">
 			{#each [
 				{ username: 'NoPleyZz',  role: 'Fondateur · Développeur principal',         color: '#f59e0b', badge: 'FOUNDER',    desc: "Créateur de SHINSEI et développeur principal. Conception du site, du launcher, du serveur et des mods — l'architecte technique derrière tout l'univers." },
-				{ username: 'MrRat45',   role: 'Responsable Discord · Partenariat',        color: '#5865f2', badge: 'DISCORD',    desc: "Responsable de la communauté Discord et des partenariats. Gestion des relations avec Breath of Legends et les serveurs partenaires de SHINSEI." },
+				{ username: 'MrRat45',   role: 'Responsable Discord · Partenariat',        color: '#5865f2', badge: 'DISCORD',    desc: "Fondateur de Breath of Legends et responsable des partenariats de SHINSEI. Gestion de la communauté Discord et des relations avec les serveurs partenaires." },
 				{ username: 'Metaliz_91', role: 'Modérateur',                              color: '#22c55e', badge: 'MOD',        desc: "Modérateur de la communauté SHINSEI. Veille au bon déroulement des échanges et au respect des règles sur le serveur et le Discord." },
 			] as member}
 				<div style="
@@ -596,7 +596,7 @@
 					<div style="padding-top:0.5rem;">
 						<p style="font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:900;color:white;margin:0 0 0.2rem;">{member.username}</p>
 						<p style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:{member.color};letter-spacing:0.1em;margin:0 0 0.85rem;">{member.role.toUpperCase()}</p>
-						<p style="font-size:0.85rem;color:#64748b;line-height:1.6;">{member.desc}</p>
+						<p style="font-size:0.85rem;color:#94a3b8;line-height:1.6;">{member.desc}</p>
 					</div>
 				</div>
 			{/each}
