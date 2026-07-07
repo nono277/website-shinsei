@@ -133,8 +133,9 @@
 					</div>
 				{/if}
 
-				<!-- Liste rang 4+ -->
-				{#if voteEntries.length > 3}
+				<!-- Liste : rang 4+ si podium affiché, sinon tous les joueurs -->
+				{@const tableStart = voteEntries.length >= 3 ? 3 : 0}
+				{#if voteEntries.slice(tableStart).length > 0}
 					<div style="background: #0a0a14; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
 						<table style="width: 100%; border-collapse: collapse;">
 							<thead>
@@ -145,7 +146,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								{#each voteEntries.slice(3) as voter, i}
+								{#each voteEntries.slice(tableStart) as voter, i}
 									{@const isMe = me !== null && voter.username === me}
 									<tr
 										style="
@@ -157,7 +158,7 @@
 										onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.background = isMe ? '#7c3aed15' : 'transparent'; }}
 									>
 										<td style="padding: 0.65rem 1rem;">
-											<span style="font-family:'Share Tech Mono',monospace; font-size: 0.8rem; color: #475569; font-weight: 700;">{i + 4}</span>
+											<span style="font-family:'Share Tech Mono',monospace; font-size: 0.8rem; color: #475569; font-weight: 700;">{i + tableStart + 1}</span>
 										</td>
 										<td style="padding: 0.65rem 1rem;">
 											<div style="display: flex; align-items: center; gap: 0.6rem;">
