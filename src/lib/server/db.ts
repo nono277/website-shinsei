@@ -17,6 +17,14 @@ db.exec(`
 		username TEXT NOT NULL,
 		kind     TEXT NOT NULL CHECK(kind IN ('vote','bonus'))
 	);
+	CREATE TABLE IF NOT EXISTS vote_history (
+		id        TEXT    PRIMARY KEY,
+		username  TEXT    NOT NULL,
+		site      TEXT    NOT NULL,
+		voted_at  INTEGER NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS idx_vote_history_username ON vote_history(username);
+	CREATE INDEX IF NOT EXISTS idx_vote_history_voted_at ON vote_history(voted_at);
 `);
 
 export default db;

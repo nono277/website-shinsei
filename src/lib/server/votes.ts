@@ -8,12 +8,16 @@ import {
 export type PendingReward = { id: string; kind: 'vote' | 'bonus' };
 
 // Prepared statements
-const stmtGetRecord   = db.prepare<[string, string], { voted_at: number }>('SELECT voted_at FROM vote_records WHERE username = ? AND site = ?');
-const stmtGetAllVotes = db.prepare<[string], { site: string; voted_at: number }>('SELECT site, voted_at FROM vote_records WHERE username = ?');
-const stmtUpsertVote  = db.prepare<[string, string, number]>('INSERT OR REPLACE INTO vote_records (username, site, voted_at) VALUES (?, ?, ?)');
-const stmtInsertPending = db.prepare<[string, string, string]>('INSERT OR IGNORE INTO pending_rewards (id, username, kind) VALUES (?, ?, ?)');
-const stmtGetPending    = db.prepare<[string], { id: string; kind: string }>('SELECT id, kind FROM pending_rewards WHERE username = ?');
-const stmtCountPending  = db.prepare<[string], { n: number }>('SELECT COUNT(*) AS n FROM pending_rewards WHERE username = ?');
+const stmtGetRecord      = db.prepare<[string, string], { voted_at: number }>('SELECT voted_at FROM vote_records WHERE username = ? AND site = ?');
+const stmtGetAllVotes    = db.prepare<[string], { site: string; voted_at: number }>('SELECT site, voted_at FROM vote_records WHERE username = ?');
+const stmtUpsertVote     = db.prepare<[string, string, number]>('INSERT OR REPLACE INTO vote_records (username, site, voted_at) VALUES (?, ?, ?)');
+const stmtInsertHistory  = db.prepare<[string, string, string, number]>('INSERT INTO vote_history (id, username, site, voted_at) VALUES (?, ?, ?, ?)');
+const stmtInsertPending  = db.prepare<[string, string, string]>('INSERT OR IGNORE INTO pending_rewards (id, username, kind) VALUES (?, ?, ?)');
+const stmtGetPending     = db.prepare<[string], { id: string; kind: string }>('SELECT id, kind FROM pending_rewards WHERE username = ?');
+const stmtCountPending   = db.prepare<[string], { n: number }>('SELECT COUNT(*) AS n FROM pending_rewards WHERE username = ?');
+const stmtTopVoters      = db.prepare<[number], { username: string; votes: number }>(
+	'SELECT username, COUNT(*) AS votes FROM vote_history WHERE voted_at >= ? GROUP BY username ORDER BY votes DESC LIMIT 10'
+);
 
 // Cache IP → { result, cachedAt } pour respecter le quota serveurs-minecraft.org (1 req/s)
 const ipVoteCache = new Map<string, { votes: number; cachedAt: number }>();
@@ -24,8 +28,10 @@ function userKey(username: string) { return username.toLowerCase(); }
 export function recordVote(username: string, site: SiteKey): void {
 	const key = userKey(username);
 	const wasComplete = allRewardSitesVoted(key);
+	const now = Date.now();
 
-	stmtUpsertVote.run(key, site, Date.now());
+	stmtUpsertVote.run(key, site, now);
+	stmtInsertHistory.run(crypto.randomUUID(), key, site, now);
 
 	if ((REWARD_SITES as readonly string[]).includes(site)) {
 		stmtInsertPending.run(crypto.randomUUID(), key, 'vote');
@@ -33,6 +39,11 @@ export function recordVote(username: string, site: SiteKey): void {
 	if (!wasComplete && allRewardSitesVoted(key)) {
 		stmtInsertPending.run(crypto.randomUUID(), key, 'bonus');
 	}
+}
+
+export function getTopVoters(limitDays = 30): { username: string; votes: number }[] {
+	const since = Date.now() - limitDays * 24 * 60 * 60 * 1000;
+	return stmtTopVoters.all(since);
 }
 
 export async function checkAndRecordMinecraftMpVote(username: string): Promise<boolean> {

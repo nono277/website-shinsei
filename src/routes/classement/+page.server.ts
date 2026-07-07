@@ -1,5 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { env } from '$env/dynamic/private';
+import { getTopVoters } from '$lib/server/votes';
 
 export interface LeaderboardEntry {
 	rank: number;
@@ -59,15 +60,7 @@ export const load: PageServerLoad = async () => {
 		// backend indisponible
 	}
 
-	let topVoters: { username: string; votes: number }[] = [];
-	try {
-		const topUrl = env.VOTE_TOP_URL ?? 'http://play.playshinsei.fr:8080/vote/top?limit=10';
-		const vRes = await fetch(topUrl, { signal: AbortSignal.timeout(4000) });
-		if (vRes.ok) {
-			const j = await vRes.json();
-			topVoters = Array.isArray(j) ? j : (Array.isArray(j.top) ? j.top : []);
-		}
-	} catch { /* backend indisponible */ }
+	const topVoters = getTopVoters(30);
 
 	return { leaderboard: data, topVoters };
 };
