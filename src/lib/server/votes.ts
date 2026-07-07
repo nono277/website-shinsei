@@ -65,9 +65,11 @@ export async function checkAndRecordTopServeursVote(username: string): Promise<b
 		const pseudo = encodeURIComponent(username);
 		const url    = `https://api.top-serveurs.net/v1/votes/check?token=${token}&server_token=${token}&pseudo=${pseudo}&playername=${pseudo}`;
 		const res    = await fetch(url, { signal: AbortSignal.timeout(5000) });
+		const body   = await res.text();
+		console.log(`[top-serveurs] ${username} → HTTP ${res.status} : ${body}`);
 		if (!res.ok) return false;
-		if ((await res.json()).success !== true) return false;
-	} catch { return false; }
+		if (JSON.parse(body).success !== true) return false;
+	} catch (e) { console.error(`[top-serveurs] ${username} → FETCH ERROR:`, e); return false; }
 
 	recordVote(username, siteKey);
 	return true;

@@ -10,6 +10,10 @@ import {
 	checkAndRecordServeursMinecraftOrgVote,
 } from '$lib/server/votes';
 
+function val(r: PromiseSettledResult<boolean>): string {
+	return r.status === 'fulfilled' ? String(r.value) : `ERR(${r.reason})`;
+}
+
 export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
 	if (!locals.user) return json({ authenticated: false });
 
@@ -21,12 +25,15 @@ export const GET: RequestHandler = async ({ locals, getClientAddress }) => {
 	// la vraie IP publique, donc la vérification échoue. OVERRIDE_CLIENT_IP permet de tester.
 	if (dev && env.OVERRIDE_CLIENT_IP) clientIp = env.OVERRIDE_CLIENT_IP;
 
-	await Promise.allSettled([
+	const [r1, r2, r3, r4] = await Promise.allSettled([
 		checkAndRecordMinecraftMpVote(username),
 		checkAndRecordTopServeursVote(username),
 		clientIp ? checkAndRecordServeursMcVote(username, clientIp) : Promise.resolve(false),
 		clientIp ? checkAndRecordServeursMinecraftOrgVote(username, clientIp) : Promise.resolve(false),
 	]);
+	console.log(`[VOTE] ${username} ip=${clientIp||'?'} mc-mp=${val(r1)} top-srv=${val(r2)} srv-mc=${val(r3)} srv-mc-org=${val(r4)}`);
 
-	return json({ authenticated: true, ...getVoteStatus(username) });
+	const status = getVoteStatus(username);
+	console.log(`[VOTE] status → rewardVoted=${status.rewardVotedCount}/${status.rewardTotal} sites=${JSON.stringify(Object.fromEntries(Object.entries(status.sites).map(([k,v]) => [k, v.canVote ? 'can' : 'voted'])))}`);
+	return json({ authenticated: true, ...status });
 };
