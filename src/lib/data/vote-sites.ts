@@ -16,6 +16,8 @@ export const VOTE_SITES = {
 		cooldownMs: 24 * 60 * 60 * 1000,
 		color: '#22c55e',
 		period: 'Toutes les 24h',
+		verifyBy: 'username' as const,
+		urlParam: 'username' as const,
 	},
 	'top-serveurs': {
 		label: 'Top-Serveurs.net',
@@ -23,6 +25,8 @@ export const VOTE_SITES = {
 		cooldownMs: 2 * 60 * 60 * 1000,
 		color: '#f59e0b',
 		period: 'Toutes les 2h',
+		verifyBy: 'username' as const,
+		urlParam: 'pseudo' as const,
 	},
 	'serveurs-minecraft': {
 		label: 'Serveurs-Minecraft.org',
@@ -30,6 +34,7 @@ export const VOTE_SITES = {
 		cooldownMs: 24 * 60 * 60 * 1000,
 		color: '#a855f7',
 		period: 'Toutes les 24h',
+		verifyBy: 'ip' as const,
 	},
 	'serveursminecraft': {
 		label: 'ServeursMinecraft.org',
@@ -37,6 +42,7 @@ export const VOTE_SITES = {
 		cooldownMs: 24 * 60 * 60 * 1000,
 		color: '#06b6d4',
 		period: 'Toutes les 24h',
+		verifyBy: 'ip' as const,
 	},
 } as const;
 

@@ -79,10 +79,11 @@
 
 	function buildVoteUrl(key: SiteKey, url: string): string {
 		if (!data.user) return url;
-		const name = encodeURIComponent(data.user.username);
-		const sep  = url.includes('?') ? '&' : '?';
-		const param = key === 'minecraft-mp' ? 'username' : 'pseudo';
-		return `${url}${sep}${param}=${name}`;
+		const site = VOTE_SITES[key];
+		if (site.verifyBy !== 'username') return url;
+		const name  = encodeURIComponent(data.user.username);
+		const sep   = url.includes('?') ? '&' : '?';
+		return `${url}${sep}${site.urlParam}=${name}`;
 	}
 
 	function handleVote(key: SiteKey, url: string): void {
@@ -229,9 +230,13 @@
 							<p style="font-size:0.72rem;color:#334155;margin:0;">Ouvert {fmtPending(info.key)}</p>
 						</div>
 					{:else}
-						{#if data.user}
+						{#if data.user && VOTE_SITES[info.key].verifyBy === 'username'}
 							<p style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:#475569;margin:0 0 0.45rem;letter-spacing:0.04em;">
-								Pseudo à utiliser : <span style="color:#94a3b8;font-weight:700;">{data.user.username}</span>
+								Pseudo : <span style="color:#94a3b8;font-weight:700;">{data.user.username}</span>
+							</p>
+						{:else if VOTE_SITES[info.key].verifyBy === 'ip'}
+							<p style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:#475569;margin:0 0 0.45rem;letter-spacing:0.04em;">
+								Vérifié par adresse IP
 							</p>
 						{/if}
 						<button
