@@ -26,8 +26,9 @@
 		return 'à l\'instant';
 	}
 
-	const maxLogins = $derived(Math.max(...data.dailyLogins.map(d => d.count), 1));
-	const maxVotes  = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
+	const maxLogins      = $derived(Math.max(...data.dailyLogins.map(d => d.count), 1));
+	const maxServerPeaks = $derived(Math.max(...data.dailyServerPeaks.map(d => d.count), 1));
+	const maxVotes       = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
 
 	// ── Console serveur ──────────────────────────────────────────────
 	let mcRunning     = $state(false);
@@ -256,34 +257,98 @@
 		</div>
 	</div>
 
-	<!-- Daily logins chart -->
+	<!-- Sessions actives (qui est connecté au site) -->
 	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
 		<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Connexions par jour</p>
-			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">14 derniers jours</span>
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Sessions actives sur le site</p>
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">{data.activeUsersList.length} session{data.activeUsersList.length !== 1 ? 's' : ''}</span>
+		</div>
+		{#if data.activeUsersList.length === 0}
+			<p style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #374151;">Aucune session active</p>
+		{:else}
+			<div style="display: grid; gap: 0.4rem; max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #1e1530 transparent;">
+				{#each data.activeUsersList as u}
+					<div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.45rem 0.6rem; background: #0a0a12; border-radius: 0.4rem; border: 1px solid #1e153060;">
+						<img
+							src="https://crafatar.com/avatars/{u.uuid}?size=28&overlay"
+							alt={u.username}
+							width="28" height="28"
+							style="border-radius: 4px; image-rendering: pixelated; flex-shrink: 0;"
+							onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
+						/>
+						<div style="flex: 1; min-width: 0;">
+							<div style="font-family:'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 700; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{u.username}</div>
+							<div style="font-family:'Share Tech Mono',monospace; font-size: 0.58rem; color: #475569;">connecté {timeAgo(u.connected_at)}</div>
+						</div>
+						<div style="font-family:'Share Tech Mono',monospace; font-size: 0.58rem; color: #374151; flex-shrink: 0;">
+							expire dans {Math.ceil((u.expires_at - Date.now()) / 86400000)}j
+						</div>
+						<div style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e80; flex-shrink: 0;"></div>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
+
+	<!-- Charts: connexions site + joueurs serveur -->
+	<div class="charts-grid" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+
+		<!-- Connexions au site -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Connexions au site</p>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">14 derniers jours</span>
+			</div>
+			<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px;">
+				{#each data.dailyLogins as day}
+					{@const pct = Math.round((day.count / maxLogins) * 100)}
+					<div
+						style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
+						background: {day.count > 0 ? 'linear-gradient(to top, #7c3aed, #a78bfa)' : '#1e1530'};
+						border-radius: 2px 2px 0 0; transition: height 0.3s;"
+						title="{day.count} connexion{day.count !== 1 ? 's' : ''} · {day.date}"
+					></div>
+				{/each}
+			</div>
+			<div style="display: flex; gap: 3px; margin-top: 5px;">
+				{#each data.dailyLogins as day, i}
+					<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{day.label}</div>
+				{/each}
+			</div>
 		</div>
 
-		<!-- Bars -->
-		<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px; padding-bottom: 0;">
-			{#each data.dailyLogins as day}
-				{@const pct = Math.round((day.count / maxLogins) * 100)}
-				<div
-					style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
-					background: {day.count > 0 ? 'linear-gradient(to top, #7c3aed, #a78bfa)' : '#1e1530'};
-					border-radius: 2px 2px 0 0; transition: height 0.3s; cursor: default;"
-					title="{day.count} connexion{day.count !== 1 ? 's' : ''} · {day.date}"
-				></div>
-			{/each}
-		</div>
-
-		<!-- X axis labels (every 2nd label to avoid overlap) -->
-		<div style="display: flex; gap: 3px; margin-top: 5px;">
-			{#each data.dailyLogins as day, i}
-				<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">
-					{day.label}
+		<!-- Joueurs sur le serveur (pic journalier) -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+				<div>
+					<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Joueurs sur le serveur</p>
 				</div>
-			{/each}
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">pic · 14 jours</span>
+			</div>
+			{#if data.dailyServerPeaks.every(d => d.count === 0)}
+				<div style="height: 100px; display: flex; align-items: center; justify-content: center; font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #374151;">
+					Aucune donnée — les pics s'enregistrent à chaque visite de l'admin
+				</div>
+			{:else}
+				<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px;">
+					{#each data.dailyServerPeaks as day}
+						{@const pct = Math.round((day.count / maxServerPeaks) * 100)}
+						<div
+							style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
+							background: {day.count > 0 ? 'linear-gradient(to top, #0d9488, #5eead4)' : '#1e1530'};
+							border-radius: 2px 2px 0 0; transition: height 0.3s;"
+							title="{day.count} joueur{day.count !== 1 ? 's' : ''} max · {day.date}"
+						></div>
+					{/each}
+				</div>
+			{/if}
+			<div style="display: flex; gap: 3px; margin-top: 5px;">
+				{#each data.dailyServerPeaks as day, i}
+					<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{day.label}</div>
+				{/each}
+			</div>
 		</div>
+
 	</div>
 
 	<!-- Console serveur Minecraft -->
@@ -546,11 +611,19 @@
 		grid-template-columns: 1fr 1fr;
 	}
 
+	/* Charts side by side */
+	.charts-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
 	@media (max-width: 640px) {
 		.two-col-grid {
 			grid-template-columns: 1fr;
 		}
 		.stop-modal-grid {
+			grid-template-columns: 1fr;
+		}
+		.charts-grid {
 			grid-template-columns: 1fr;
 		}
 	}

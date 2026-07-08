@@ -37,7 +37,8 @@
       "Bash(grep -iE \"shinsei|menu|\\\\.jar$\")",
       "Bash(cmd.exe //c \"gradlew.bat build --console=plain --no-daemon\")",
       "Bash(sh gradlew build --console=plain --no-daemon)",
-      "Bash(grep -nE \"SERVER_IP|playshinsei|25565|:[0-9]{4,5}\" \"/z/documents/shinsei/shinsei-launcher/apps/launcher/resources/shinsei-mod/ShinseiMenuMod.java\")"
+      "Bash(grep -nE \"SERVER_IP|playshinsei|25565|:[0-9]{4,5}\" \"/z/documents/shinsei/shinsei-launcher/apps/launcher/resources/shinsei-mod/ShinseiMenuMod.java\")",
+      "Bash(npx svelte-kit *)"
     ]
   }
 }

@@ -50,6 +50,10 @@ db.exec(`
 	);
 	CREATE INDEX IF NOT EXISTS idx_vote_history_username ON vote_history(username);
 	CREATE INDEX IF NOT EXISTS idx_vote_history_voted_at ON vote_history(voted_at);
+	CREATE TABLE IF NOT EXISTS server_daily_peaks (
+		date TEXT PRIMARY KEY,
+		peak INTEGER NOT NULL DEFAULT 0
+	);
 `);
 
 // Migration : ajoute next_vote_at si la colonne n'existe pas encore

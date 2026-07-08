@@ -78,12 +78,28 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 		}
 	} catch { /* serveur offline */ }
 
+	// Enregistre le pic du jour
+	if (serverOnline) {
+		const today = new Date().toISOString().slice(0, 10);
+		db.prepare(`
+			INSERT INTO server_daily_peaks (date, peak) VALUES (?, ?)
+			ON CONFLICT(date) DO UPDATE SET peak = MAX(peak, excluded.peak)
+		`).run(today, serverPlayers);
+	}
+
+	const cutoffDate = new Date(since14).toISOString().slice(0, 10);
+	const rawServerPeaks = db.prepare(`
+		SELECT date, peak as count FROM server_daily_peaks WHERE date >= ? ORDER BY date ASC
+	`).all(cutoffDate) as { date: string; count: number }[];
+	const dailyServerPeaks = fillDays(rawServerPeaks, 14);
+
 	return {
 		adminUser: locals.user.username,
 		maintenance: getMaintenanceConfig(),
 		stats: { activeSessions, uniqueUsers, totalDownloads, totalVotes, totalLogins, active7 },
 		server: { online: serverOnline, players: serverPlayers, donjons: serverDonjons, failles: serverFailles },
 		dailyLogins,
+		dailyServerPeaks,
 		topVoters,
 		activeUsersList,
 	};
