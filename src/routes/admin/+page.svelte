@@ -1,29 +1,8 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import type { PageData, ActionData } from './$types';
+	import type { PageData } from './$types';
 
-	let { data, form }: { data: PageData; form: ActionData } = $props();
-
-	let enabled = $state(data.maintenance.enabled);
-	let endDate = $state(data.maintenance.endDate || '2026-07-09T21:00');
-	let message = $state(data.maintenance.message);
-
-	let countdown = $state('');
-	$effect(() => {
-		if (!endDate) { countdown = ''; return; }
-		const update = () => {
-			const diff = new Date(endDate).getTime() - Date.now();
-			if (diff <= 0) { countdown = 'Expiré'; return; }
-			const h = Math.floor(diff / 3600000);
-			const m = Math.floor((diff % 3600000) / 60000);
-			const s = Math.floor((diff % 60000) / 1000);
-			countdown = `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
-		};
-		update();
-		const t = setInterval(update, 1000);
-		return () => clearInterval(t);
-	});
+	let { data }: { data: PageData } = $props();
 
 	function fmtDate(iso: string) {
 		if (!iso) return '';
@@ -40,16 +19,25 @@
 	const maxVotes  = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
 
 	// ── Console serveur ──────────────────────────────────────────────
-	let mcRunning   = $state(false);
-	let mcLogs      = $state<string[]>([]);
-	let mcStatus    = $state('');
-	let mcLoading   = $state(false);
-	let consoleEl   = $state<HTMLElement | null>(null);
+	let mcRunning     = $state(false);
+	let mcInitialized = $state(false);
+	let mcLogs        = $state<string[]>([]);
+	let mcStatus      = $state('');
+	let mcLoading     = $state(false);
+	let consoleEl     = $state<HTMLElement | null>(null);
 
 	// ── Modal STOP ───────────────────────────────────────────────────
-	let showStopModal  = $state(false);
-	let stopDuration   = $state(60);
-	let stopMessage    = $state('Le serveur est en maintenance. Nous revenons très bientôt !');
+	let showStopModal = $state(false);
+	let stopEnabled   = $state(true);
+	let stopEndDate   = $state('');
+	let stopMessage   = $state(data.maintenance.message || 'Le serveur est en maintenance. Nous revenons très bientôt !');
+
+	function openStopModal() {
+		const d = new Date(Date.now() + 3_600_000);
+		stopEndDate = d.toISOString().slice(0, 16);
+		stopEnabled = true;
+		showStopModal = true;
+	}
 
 	// ── Commande MC ──────────────────────────────────────────────────
 	let cmdInput   = $state('');
@@ -80,7 +68,15 @@
 	async function fetchStatus() {
 		try {
 			const r = await fetch('/api/admin/server?action=status');
-			if (r.ok) { const d = await r.json(); mcRunning = d.running ?? false; }
+			if (!r.ok) return;
+			const d = await r.json();
+			const newRunning = d.running ?? false;
+			if (mcInitialized && newRunning !== mcRunning) {
+				mcStatus = newRunning ? '✓ Serveur en ligne' : '✓ Serveur arrêté';
+				setTimeout(() => { if (mcStatus.startsWith('✓')) mcStatus = ''; }, 4000);
+			}
+			mcRunning = newRunning;
+			mcInitialized = true;
 		} catch { /* offline */ }
 	}
 
@@ -88,7 +84,7 @@
 		setTimeout(() => { if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight; }, 20);
 	}
 
-	async function serverAction(action: 'start' | 'stop', opts: { duration?: number; message?: string } = {}) {
+	async function serverAction(action: 'start' | 'stop', opts: { enabled?: boolean; endDate?: string; message?: string } = {}) {
 		mcLoading = true;
 		mcStatus = '';
 		try {
@@ -130,7 +126,7 @@
 			} catch { /* ignore */ }
 		};
 
-		const statusInterval = setInterval(fetchStatus, 3000);
+		const statusInterval = setInterval(fetchStatus, 2000);
 		return () => { es.close(); clearInterval(statusInterval); };
 	});
 </script>
@@ -303,7 +299,7 @@
 
 				<!-- Stop -->
 				<button
-					onclick={() => { if (mcRunning && !mcLoading) showStopModal = true; }}
+					onclick={() => { if (mcRunning && !mcLoading) openStopModal(); }}
 					disabled={!mcRunning || mcLoading}
 					style="
 						display: flex; align-items: center; gap: 0.4rem;
@@ -417,120 +413,6 @@
 		</div>
 	</div>
 
-	<!-- Maintenance card -->
-	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
-		<div style="padding: 1rem 1.5rem; border-bottom: 1px solid #1e1530; display: flex; align-items: center; justify-content: space-between; background: #0a0a12;">
-			<div>
-				<h2 style="font-family:'Rajdhani',sans-serif; font-size: 1.05rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.06em; margin: 0 0 0.15rem;">
-					BANDEAU MAINTENANCE
-				</h2>
-				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #475569; margin: 0;">
-					Affiché en haut de toutes les pages du site
-				</p>
-			</div>
-			<div style="display: flex; align-items: center; gap: 0.5rem; font-family:'Share Tech Mono',monospace; font-size: 0.72rem;">
-				<div style="width: 8px; height: 8px; border-radius: 50%; background: {data.maintenance.enabled ? '#22c55e' : '#475569'}; box-shadow: {data.maintenance.enabled ? '0 0 8px #22c55e' : 'none'};"></div>
-				<span style="color: {data.maintenance.enabled ? '#22c55e' : '#475569'};">{data.maintenance.enabled ? 'ACTIF' : 'INACTIF'}</span>
-			</div>
-		</div>
-
-		<form method="POST" action="?/save" use:enhance style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
-
-			<!-- Toggle -->
-			<div style="display: flex; align-items: center; gap: 1rem; cursor: pointer; user-select: none;"
-				role="none" onclick={() => { enabled = !enabled; }}>
-				<div style="position: relative; width: 48px; height: 26px; flex-shrink: 0; pointer-events: none;">
-					<input type="checkbox" name="enabled" checked={enabled} style="position:absolute; opacity:0; width:0; height:0;" />
-					<div style="
-						width: 100%; height: 100%; border-radius: 9999px;
-						background: {enabled ? '#7c3aed' : '#1e293b'};
-						border: 1px solid {enabled ? '#9f67ff' : '#334155'};
-						transition: background 0.25s, border-color 0.25s;
-						box-shadow: {enabled ? '0 0 12px #7c3aed60' : 'none'};
-					"></div>
-					<div style="
-						position: absolute; top: 4px; left: {enabled ? '26px' : '4px'};
-						width: 16px; height: 16px; border-radius: 50%;
-						background: white; transition: left 0.25s;
-						box-shadow: 0 1px 3px rgba(0,0,0,0.6);
-					"></div>
-				</div>
-				<div>
-					<div style="font-family:'Rajdhani',sans-serif; font-size: 1rem; font-weight: 700; color: #e2e8f0;">
-						{enabled ? 'Maintenance activée' : 'Maintenance désactivée'}
-					</div>
-					<div style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #64748b;">
-						{enabled ? 'Le bandeau rouge est visible sur tout le site' : 'Le site est accessible normalement'}
-					</div>
-				</div>
-			</div>
-
-			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="sm:grid-cols-2">
-				<!-- End date -->
-				<div>
-					<label for="endDate" style="display: block; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.4rem;">
-						Fin prévue
-					</label>
-					<input id="endDate" type="datetime-local" name="endDate" bind:value={endDate}
-						style="width: 100%; padding: 0.55rem 0.75rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.8rem; outline: none; transition: border-color 0.2s; box-sizing: border-box; color-scheme: dark;"
-						onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; }}
-						onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
-					/>
-					{#if countdown}
-						<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: {countdown === 'Expiré' ? '#ef4444' : '#64748b'}; margin-top: 0.3rem;">
-							{countdown === 'Expiré' ? '⚠ Date dépassée' : `Reste : ${countdown}`}
-						</p>
-					{/if}
-				</div>
-
-				<!-- Message -->
-				<div>
-					<label for="message" style="display: block; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.4rem;">
-						Message
-					</label>
-					<textarea id="message" name="message" bind:value={message} rows="2"
-						placeholder="Ex : Mise à jour majeure en cours..."
-						style="width: 100%; padding: 0.55rem 0.75rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.8rem; outline: none; resize: none; transition: border-color 0.2s; box-sizing: border-box;"
-						onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; }}
-						onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
-					></textarea>
-				</div>
-			</div>
-
-			<!-- Preview -->
-			{#if enabled}
-				<div style="position: relative; overflow: hidden; height: 40px; border-radius: 0.4rem; display: flex; align-items: center;
-					background: repeating-linear-gradient(135deg, #7f1d1d 0px, #7f1d1d 16px, #9b1c1c 16px, #9b1c1c 32px);
-					border: 1px solid #ef444460;">
-					<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.28);"></div>
-					<div style="position: relative; z-index:1; display:flex; align-items:center; gap:0.5rem; padding: 0 0.75rem; width:100%; font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:white; overflow:hidden;">
-						<span style="font-weight:700; color:#fde68a; flex-shrink:0;">⚙ MAINTENANCE EN COURS</span>
-						<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">— {message || '...'}</span>
-						{#if endDate}<span style="flex-shrink:0; color:#fed7aa; font-size:0.65rem;">{fmtDate(endDate)}</span>{/if}
-					</div>
-				</div>
-			{/if}
-
-			<!-- Save -->
-			<div style="display: flex; align-items: center; gap: 1rem;">
-				<button type="submit"
-					style="font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 900; letter-spacing: 0.1em; padding: 0.55rem 1.5rem; background: #7c3aed; color: white; border: 1px solid #9f67ff; border-radius: 0.5rem; cursor: pointer; box-shadow: 0 0 14px #7c3aed40; transition: box-shadow 0.2s;"
-					onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px #7c3aed80'; }}
-					onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 14px #7c3aed40'; }}
-				>ENREGISTRER</button>
-				{#if form?.success}
-					<span style="display:flex; align-items:center; gap:0.4rem; font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:#22c55e;">
-						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-						Enregistré
-					</span>
-				{/if}
-				{#if form?.error}
-					<span style="font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:#ef4444;">{form.error}</span>
-				{/if}
-			</div>
-		</form>
-	</div>
-
 	<p style="font-family:'Share Tech Mono',monospace; font-size: 0.6rem; color: #1f2937; text-align: center; margin-top: 1.5rem;">
 		/admin · accès restreint
 	</p>
@@ -561,40 +443,67 @@
 			</div>
 		</div>
 
-		<!-- Duration presets -->
-		<p style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.6rem;">
-			Durée de maintenance
-		</p>
-		<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem;">
-			{#each [[30,'30 min'],[60,'1h'],[120,'2h'],[240,'4h']] as [mins, label]}
-				<button
-					onclick={() => stopDuration = mins as number}
-					style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; padding: 0.35rem 0.85rem; border-radius: 0.4rem;
-					border: 1px solid {stopDuration === mins ? '#ef4444' : '#1e1530'};
-					background: {stopDuration === mins ? '#450a0a' : '#13131e'};
-					color: {stopDuration === mins ? '#f87171' : '#475569'};
-					cursor: pointer; transition: all 0.15s;"
-				>{label}</button>
-			{/each}
-			<div style="display: flex; align-items: center; gap: 0.4rem;">
-				<input type="number" bind:value={stopDuration} min="5" max="10080"
-					style="width: 68px; padding: 0.35rem 0.5rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.4rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; outline: none; color-scheme: dark; transition: border-color 0.2s;"
-					onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef4444'; }}
-					onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
-				/>
-				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #475569;">min</span>
+		<!-- Toggle bandeau -->
+		<div style="display: flex; align-items: center; gap: 1rem; cursor: pointer; user-select: none; margin-bottom: 1.25rem;"
+			role="none" onclick={() => stopEnabled = !stopEnabled}>
+			<div style="position: relative; width: 48px; height: 26px; flex-shrink: 0; pointer-events: none;">
+				<div style="width:100%; height:100%; border-radius:9999px; background:{stopEnabled ? '#ef4444' : '#1e293b'}; border:1px solid {stopEnabled ? '#f87171' : '#334155'}; transition:all 0.25s; box-shadow:{stopEnabled ? '0 0 12px #ef444460' : 'none'};"></div>
+				<div style="position:absolute; top:4px; left:{stopEnabled ? '26px' : '4px'}; width:16px; height:16px; border-radius:50%; background:white; transition:left 0.25s; box-shadow:0 1px 3px rgba(0,0,0,0.6);"></div>
+			</div>
+			<div>
+				<div style="font-family:'Rajdhani',sans-serif; font-size: 0.95rem; font-weight: 700; color: #e2e8f0;">
+					{stopEnabled ? 'Bandeau maintenance activé' : 'Bandeau maintenance désactivé'}
+				</div>
+				<div style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #64748b;">
+					{stopEnabled ? 'Le bandeau rouge sera affiché sur tout le site' : 'Le site restera accessible normalement'}
+				</div>
 			</div>
 		</div>
 
-		<!-- Message -->
-		<p style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.6rem;">
-			Message affiché
-		</p>
-		<textarea bind:value={stopMessage} rows="2"
-			style="width: 100%; padding: 0.55rem 0.75rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.78rem; outline: none; resize: none; margin-bottom: 1.5rem; box-sizing: border-box; transition: border-color 0.2s;"
-			onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef4444'; }}
-			onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
-		></textarea>
+		{#if stopEnabled}
+		<!-- Fin prévue + message -->
+		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+			<div>
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.45rem;">Fin prévue</p>
+				<div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.45rem;">
+					{#each [[30,'30m'],[60,'1h'],[120,'2h'],[240,'4h']] as [mins, label]}
+						<button onclick={() => { const d = new Date(Date.now() + (mins as number)*60000); stopEndDate = d.toISOString().slice(0,16); }}
+							style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; padding: 0.2rem 0.55rem; border-radius: 0.3rem; border: 1px solid #1e1530; background: #13131e; color: #475569; cursor: pointer; transition: all 0.15s;"
+							onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.borderColor='#ef444450'; (e.currentTarget as HTMLElement).style.color='#f87171'; }}
+							onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.borderColor='#1e1530'; (e.currentTarget as HTMLElement).style.color='#475569'; }}
+						>{label}</button>
+					{/each}
+				</div>
+				<input type="datetime-local" bind:value={stopEndDate}
+					style="width: 100%; padding: 0.45rem 0.6rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.45rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.75rem; outline: none; color-scheme: dark; box-sizing: border-box; transition: border-color 0.2s;"
+					onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef4444'; }}
+					onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
+				/>
+			</div>
+			<div>
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.45rem;">Message</p>
+				<textarea bind:value={stopMessage} rows="4"
+					style="width: 100%; padding: 0.45rem 0.6rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.45rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.75rem; outline: none; resize: none; box-sizing: border-box; transition: border-color 0.2s;"
+					onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef4444'; }}
+					onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
+				></textarea>
+			</div>
+		</div>
+
+		<!-- Preview -->
+		<div style="position: relative; overflow: hidden; height: 36px; border-radius: 0.4rem; display: flex; align-items: center; margin-bottom: 1.25rem;
+			background: repeating-linear-gradient(135deg, #7f1d1d 0px, #7f1d1d 14px, #9b1c1c 14px, #9b1c1c 28px);
+			border: 1px solid #ef444440;">
+			<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.28);"></div>
+			<div style="position: relative; z-index:1; display:flex; align-items:center; gap:0.5rem; padding: 0 0.75rem; width:100%; font-family:'Share Tech Mono',monospace; font-size:0.66rem; color:white; overflow:hidden;">
+				<span style="font-weight:700; color:#fde68a; flex-shrink:0;">⚙ MAINTENANCE EN COURS</span>
+				<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">— {stopMessage || '...'}</span>
+				{#if stopEndDate}<span style="flex-shrink:0; color:#fed7aa; font-size:0.6rem;">{fmtDate(stopEndDate)}</span>{/if}
+			</div>
+		</div>
+		{:else}
+		<div style="margin-bottom: 1.25rem;"></div>
+		{/if}
 
 		<!-- Action buttons -->
 		<div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
@@ -605,7 +514,7 @@
 				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#374151'; (e.currentTarget as HTMLElement).style.color = '#6b7280'; }}
 			>Annuler</button>
 			<button
-				onclick={() => { showStopModal = false; serverAction('stop', { duration: stopDuration, message: stopMessage }); }}
+				onclick={() => { showStopModal = false; serverAction('stop', { enabled: stopEnabled, endDate: stopEndDate, message: stopMessage }); }}
 				style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 900; padding: 0.5rem 1.5rem; background: #7f1d1d; border: 1px solid rgba(239,68,68,0.4); border-radius: 0.5rem; color: #f87171; cursor: pointer; letter-spacing: 0.08em; box-shadow: 0 0 18px rgba(239,68,68,0.25); transition: background 0.2s, box-shadow 0.2s;"
 				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.background = '#991b1b'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px rgba(239,68,68,0.45)'; }}
 				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.background = '#7f1d1d'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(239,68,68,0.25)'; }}

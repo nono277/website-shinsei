@@ -67,11 +67,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
 	const body = await request.json() as {
 		action: string;
-		duration?: number;   // minutes (pour stop)
+		enabled?: boolean;
+		endDate?: string;
 		message?: string;
-		cmd?: string;        // commande MC (action === 'cmd')
+		cmd?: string;
 	};
-	const { action, duration = 60, message = 'Le serveur est en maintenance. Nous revenons très bientôt !', cmd } = body;
+	const { action, enabled = true, endDate: bodyEndDate, message = 'Le serveur est en maintenance. Nous revenons très bientôt !', cmd } = body;
 
 	if (!['start', 'stop', 'cmd'].includes(action)) {
 		return json({ error: 'Action invalide' }, { status: 400 });
@@ -88,10 +89,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		result = await daemon(`/${action}`, 'POST') as typeof result;
 
 		if (action === 'stop') {
-			const endDate = new Date(Date.now() + duration * 60_000);
-			setConfig('maintenance_enabled', '1');
-			setConfig('maintenance_end', endDate.toISOString().slice(0, 16));
-			setConfig('maintenance_message', message);
+			if (enabled) {
+				const endDate = bodyEndDate ?? new Date(Date.now() + 3_600_000).toISOString().slice(0, 16);
+				setConfig('maintenance_enabled', '1');
+				setConfig('maintenance_end', endDate);
+				setConfig('maintenance_message', message);
+			}
 		} else {
 			setConfig('maintenance_enabled', '0');
 		}
