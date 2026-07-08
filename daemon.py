@@ -89,23 +89,22 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Connection', 'keep-alive')
             self.send_header('X-Accel-Buffering', 'no')
             self.end_headers()
+            # tail -F (majuscule) : suit par nom de fichier, gère la rotation
+            proc = subprocess.Popen(
+                ['tail', '-F', '-n', '100', LOG_FILE],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                bufsize=1,
+            )
             try:
-                with open(LOG_FILE, 'r', errors='replace') as f:
-                    # Envoie les 100 dernières lignes immédiatement
-                    last = collections.deque(f, 100)
-                    for line in last:
-                        self._sse(line.rstrip())
-                    # Puis tail -f en temps réel
-                    while True:
-                        line = f.readline()
-                        if line:
-                            self._sse(line.rstrip())
-                        else:
-                            time.sleep(0.15)
+                for line in proc.stdout:
+                    self._sse(line.rstrip())
             except (BrokenPipeError, ConnectionResetError):
                 pass
-            except FileNotFoundError:
-                self._sse('[Log file introuvable]')
+            finally:
+                proc.kill()
+                proc.wait()
 
         else:
             self.reply(404, {'ok': False, 'message': 'Route inconnue'})
