@@ -64,9 +64,12 @@
 			Maintenance en cours
 		</span>
 
-		<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-			— {data.maintenance.message}
-		</span>
+		<div class="msg-marquee-outer">
+			<div class="msg-marquee-track">
+				<span>— {data.maintenance.message}</span>
+				<span aria-hidden="true">— {data.maintenance.message}</span>
+			</div>
+		</div>
 
 		{#if data.maintenance.endDate}
 			<span style="flex-shrink:0; color:#fed7aa; white-space:nowrap; font-size:0.7rem;" class="hidden sm:inline">
@@ -215,6 +218,25 @@
 	@keyframes countdown-flash {
 		0%, 100% { opacity: 1; }
 		50%       { opacity: 0.65; }
+	}
+	@keyframes marquee-track {
+		0%   { transform: translateX(0); }
+		100% { transform: translateX(-50%); }
+	}
+	.msg-marquee-outer {
+		flex: 1;
+		overflow: hidden;
+		mask-image: linear-gradient(to right, transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
+		-webkit-mask-image: linear-gradient(to right, transparent 0, black 1.5rem, black calc(100% - 1.5rem), transparent 100%);
+	}
+	.msg-marquee-track {
+		display: inline-flex;
+		animation: marquee-track 22s linear infinite;
+	}
+	.msg-marquee-track span {
+		color: #fca5a5;
+		white-space: nowrap;
+		padding-right: 5rem;
 	}
 
 	.maintenance-banner {
