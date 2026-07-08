@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -45,6 +46,38 @@
 	let mcLoading   = $state(false);
 	let consoleEl   = $state<HTMLElement | null>(null);
 
+	// ── Modal STOP ───────────────────────────────────────────────────
+	let showStopModal  = $state(false);
+	let stopDuration   = $state(60);
+	let stopMessage    = $state('Le serveur est en maintenance. Nous revenons très bientôt !');
+
+	// ── Commande MC ──────────────────────────────────────────────────
+	let cmdInput   = $state('');
+	let cmdStatus  = $state('');
+	let cmdLoading = $state(false);
+
+	async function sendCmd() {
+		const cmd = cmdInput.trim();
+		if (!cmd || cmdLoading) return;
+		cmdLoading = true;
+		cmdStatus  = '';
+		try {
+			const r = await fetch('/api/admin/server', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action: 'cmd', cmd }),
+			});
+			const d = await r.json();
+			cmdStatus = d.message ?? d.error ?? '';
+			cmdInput  = '';
+			setTimeout(fetchLogs, 600);
+		} catch {
+			cmdStatus = 'Erreur réseau';
+		} finally {
+			cmdLoading = false;
+		}
+	}
+
 	async function fetchStatus() {
 		try {
 			const r = await fetch('/api/admin/server?action=status');
@@ -64,18 +97,19 @@
 		} catch { /* offline */ }
 	}
 
-	async function serverAction(action: 'start' | 'stop') {
+	async function serverAction(action: 'start' | 'stop', opts: { duration?: number; message?: string } = {}) {
 		mcLoading = true;
 		mcStatus = '';
 		try {
 			const r = await fetch('/api/admin/server', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ action }),
+				body: JSON.stringify({ action, ...opts }),
 			});
 			const d = await r.json();
 			mcStatus = d.message ?? d.error ?? '';
 			await fetchStatus();
+			await invalidateAll();
 		} catch {
 			mcStatus = 'Erreur réseau';
 		} finally {
@@ -269,7 +303,7 @@
 
 				<!-- Stop -->
 				<button
-					onclick={() => serverAction('stop')}
+					onclick={() => { if (mcRunning && !mcLoading) showStopModal = true; }}
 					disabled={!mcRunning || mcLoading}
 					style="
 						display: flex; align-items: center; gap: 0.4rem;
@@ -335,8 +369,42 @@
 			{/if}
 		</div>
 
+		<!-- Command input -->
+		<div style="padding: 0.5rem 0.75rem; background: #07070f; border-top: 1px solid #1e1530; display: flex; align-items: center; gap: 0.5rem;">
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.8rem; color: #4ade80; flex-shrink: 0; user-select: none;">›</span>
+			<input
+				type="text"
+				bind:value={cmdInput}
+				placeholder={mcRunning ? 'say Bonjour, tp @a ~ ~ ~, ...' : 'Serveur hors ligne'}
+				disabled={!mcRunning || cmdLoading}
+				onkeydown={(e) => { if (e.key === 'Enter') sendCmd(); }}
+				style="
+					flex: 1; background: transparent; border: none; outline: none;
+					font-family:'Share Tech Mono',monospace; font-size: 0.78rem;
+					color: {mcRunning ? '#e2e8f0' : '#374151'};
+					caret-color: #4ade80;
+				"
+			/>
+			{#if cmdStatus}
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #06b6d4; flex-shrink: 0; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title={cmdStatus}>{cmdStatus}</span>
+			{/if}
+			<button
+				onclick={sendCmd}
+				disabled={!mcRunning || cmdLoading || !cmdInput.trim()}
+				style="
+					font-family:'Rajdhani',sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+					padding: 0.25rem 0.75rem; border-radius: 0.35rem; flex-shrink: 0;
+					background: {mcRunning && cmdInput.trim() && !cmdLoading ? '#052e16' : '#0d0d15'};
+					border: 1px solid {mcRunning && cmdInput.trim() && !cmdLoading ? '#16a34a50' : '#1e1530'};
+					color: {mcRunning && cmdInput.trim() && !cmdLoading ? '#4ade80' : '#374151'};
+					cursor: {mcRunning && cmdInput.trim() && !cmdLoading ? 'pointer' : 'not-allowed'};
+					transition: all 0.15s;
+				"
+			>{cmdLoading ? '...' : 'ENVOYER'}</button>
+		</div>
+
 		<!-- Footer -->
-		<div style="padding: 0.5rem 1rem; background: #0a0a12; border-top: 1px solid #1e1530; display: flex; align-items: center; justify-content: space-between;">
+		<div style="padding: 0.4rem 1rem; background: #0a0a12; border-top: 1px solid #1e153060; display: flex; align-items: center; justify-content: space-between;">
 			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.62rem; color: #374151;">
 				Rafraîchissement auto toutes les 5s · {mcLogs.length} lignes
 			</span>
@@ -467,3 +535,82 @@
 		/admin · accès restreint
 	</p>
 </div>
+
+<!-- Modal STOP -->
+{#if showStopModal}
+<div
+	style="position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.72); backdrop-filter: blur(4px);"
+	onclick={(e) => { if (e.target === e.currentTarget) showStopModal = false; }}
+	role="dialog" aria-modal="true" aria-label="Arrêt du serveur"
+>
+	<div style="background: #0d0d15; border: 1px solid rgba(239,68,68,0.35); border-radius: 1rem; padding: 2rem; max-width: 440px; width: 90%; box-shadow: 0 0 60px rgba(239,68,68,0.18), 0 0 0 1px rgba(239,68,68,0.08);">
+
+		<!-- Title -->
+		<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2">
+				<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+				<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+			</svg>
+			<div>
+				<h3 style="font-family:'Rajdhani',sans-serif; font-size: 1.2rem; font-weight: 900; color: #f87171; margin: 0 0 0.1rem; letter-spacing: 0.05em;">
+					ARRÊT DU SERVEUR
+				</h3>
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #64748b; margin: 0;">
+					Le bandeau maintenance sera activé automatiquement
+				</p>
+			</div>
+		</div>
+
+		<!-- Duration presets -->
+		<p style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.6rem;">
+			Durée de maintenance
+		</p>
+		<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem;">
+			{#each [[30,'30 min'],[60,'1h'],[120,'2h'],[240,'4h']] as [mins, label]}
+				<button
+					onclick={() => stopDuration = mins as number}
+					style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; padding: 0.35rem 0.85rem; border-radius: 0.4rem;
+					border: 1px solid {stopDuration === mins ? '#ef4444' : '#1e1530'};
+					background: {stopDuration === mins ? '#450a0a' : '#13131e'};
+					color: {stopDuration === mins ? '#f87171' : '#475569'};
+					cursor: pointer; transition: all 0.15s;"
+				>{label}</button>
+			{/each}
+			<div style="display: flex; align-items: center; gap: 0.4rem;">
+				<input type="number" bind:value={stopDuration} min="5" max="10080"
+					style="width: 68px; padding: 0.35rem 0.5rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.4rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; outline: none; color-scheme: dark; transition: border-color 0.2s;"
+					onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef4444'; }}
+					onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
+				/>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #475569;">min</span>
+			</div>
+		</div>
+
+		<!-- Message -->
+		<p style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.6rem;">
+			Message affiché
+		</p>
+		<textarea bind:value={stopMessage} rows="2"
+			style="width: 100%; padding: 0.55rem 0.75rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.78rem; outline: none; resize: none; margin-bottom: 1.5rem; box-sizing: border-box; transition: border-color 0.2s;"
+			onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ef4444'; }}
+			onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
+		></textarea>
+
+		<!-- Action buttons -->
+		<div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+			<button
+				onclick={() => showStopModal = false}
+				style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.5rem 1.25rem; background: transparent; border: 1px solid #374151; border-radius: 0.5rem; color: #6b7280; cursor: pointer; transition: border-color 0.2s, color 0.2s;"
+				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#6b7280'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; }}
+				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#374151'; (e.currentTarget as HTMLElement).style.color = '#6b7280'; }}
+			>Annuler</button>
+			<button
+				onclick={() => { showStopModal = false; serverAction('stop', { duration: stopDuration, message: stopMessage }); }}
+				style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 900; padding: 0.5rem 1.5rem; background: #7f1d1d; border: 1px solid rgba(239,68,68,0.4); border-radius: 0.5rem; color: #f87171; cursor: pointer; letter-spacing: 0.08em; box-shadow: 0 0 18px rgba(239,68,68,0.25); transition: background 0.2s, box-shadow 0.2s;"
+				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.background = '#991b1b'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px rgba(239,68,68,0.45)'; }}
+				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.background = '#7f1d1d'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 18px rgba(239,68,68,0.25)'; }}
+			>CONFIRMER L'ARRÊT</button>
+		</div>
+	</div>
+</div>
+{/if}

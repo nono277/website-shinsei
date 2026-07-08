@@ -39,26 +39,10 @@
 <div
 	aria-live="polite"
 	role="status"
-	style="
-		position: fixed;
-		top: 0; left: 0; right: 0;
-		z-index: 200;
-		height: {BANNER_H}px;
-		display: flex;
-		align-items: center;
-		overflow: hidden;
-		background: repeating-linear-gradient(
-			135deg,
-			#7f1d1d 0px, #7f1d1d 20px,
-			#9b1c1c 20px, #9b1c1c 40px
-		);
-		border-bottom: 2px solid #ef4444;
-		box-shadow: 0 0 30px rgba(239,68,68,0.55), 0 2px 8px rgba(0,0,0,0.6);
-		animation: maintenance-glow 2.4s ease-in-out infinite;
-	"
+	class="maintenance-banner"
+	style="position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: {BANNER_H}px; display: flex; align-items: center; overflow: hidden; border-bottom: 2px solid #ef4444;"
 >
-	<!-- darkening overlay for readability -->
-	<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.28);"></div>
+	<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.22);"></div>
 
 	<div style="
 		position: relative; z-index: 1;
@@ -66,18 +50,18 @@
 		padding: 0 1.25rem;
 		width: 100%; max-width: 76rem; margin: 0 auto;
 		font-family: 'Share Tech Mono', monospace;
-		font-size: 0.78rem;
-		color: #fff;
+		font-size: 0.78rem; color: #fff;
 		text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 		overflow: hidden;
 	">
-		<!-- icon -->
-		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="2.2" style="flex-shrink:0;">
-			<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+		<!-- icône pulsante -->
+		<svg class="maintenance-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="2.2" style="flex-shrink:0;">
+			<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+			<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
 		</svg>
 
-		<span style="font-weight:700; color:#fde68a; flex-shrink:0; letter-spacing:0.08em; font-size:0.82rem;">
-			MAINTENANCE EN COURS
+		<span style="font-weight:700; color:#fde68a; flex-shrink:0; letter-spacing:0.1em; font-size:0.83rem; text-transform:uppercase;">
+			Maintenance en cours
 		</span>
 
 		<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
@@ -85,18 +69,11 @@
 		</span>
 
 		{#if data.maintenance.endDate}
-			<span style="flex-shrink:0; color:#fed7aa; white-space:nowrap; font-size:0.72rem;" class="hidden sm:inline">
-				Fin le {new Date(data.maintenance.endDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {new Date(data.maintenance.endDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+			<span style="flex-shrink:0; color:#fed7aa; white-space:nowrap; font-size:0.7rem;" class="hidden sm:inline">
+				Retour le {new Date(data.maintenance.endDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {new Date(data.maintenance.endDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
 			</span>
 			{#if countdown}
-				<span style="
-					flex-shrink:0; background:rgba(0,0,0,0.5);
-					padding:2px 10px; border-radius:4px;
-					color:#fde68a; font-weight:700; font-size:0.8rem;
-					letter-spacing:0.06em; border:1px solid rgba(239,68,68,0.4);
-				">
-					{countdown}
-				</span>
+				<span class="countdown-pill">{countdown}</span>
 			{/if}
 		{/if}
 	</div>
@@ -226,5 +203,43 @@
 	@keyframes maintenance-glow {
 		0%, 100% { box-shadow: 0 0 30px rgba(239,68,68,0.55), 0 2px 8px rgba(0,0,0,0.6); }
 		50%       { box-shadow: 0 0 50px rgba(239,68,68,0.85), 0 2px 8px rgba(0,0,0,0.6), 0 0 80px rgba(239,68,68,0.3); }
+	}
+	@keyframes stripe-slide {
+		from { background-position: 0 0; }
+		to   { background-position: 40px 40px; }
+	}
+	@keyframes icon-pulse {
+		0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 3px #fde68a80); }
+		50%       { opacity: 0.65; transform: scale(1.2); filter: drop-shadow(0 0 8px #fde68a); }
+	}
+	@keyframes countdown-flash {
+		0%, 100% { opacity: 1; }
+		50%       { opacity: 0.65; }
+	}
+
+	.maintenance-banner {
+		background:
+			repeating-linear-gradient(
+				135deg,
+				rgba(120,20,20,0.9)  0px,  rgba(120,20,20,0.9)  14px,
+				rgba(155,28,28,0.9) 14px, rgba(155,28,28,0.9) 28px
+			);
+		background-size: 40px 40px;
+		animation: stripe-slide 1.8s linear infinite, maintenance-glow 2s ease-in-out infinite;
+	}
+	.maintenance-icon {
+		animation: icon-pulse 1.4s ease-in-out infinite;
+	}
+	.countdown-pill {
+		background: rgba(0,0,0,0.45);
+		border: 1px solid rgba(239,68,68,0.35);
+		border-radius: 9999px;
+		padding: 0.15rem 0.65rem;
+		font-size: 0.68rem;
+		color: #fde68a;
+		font-family: 'Share Tech Mono', monospace;
+		white-space: nowrap;
+		flex-shrink: 0;
+		animation: countdown-flash 1s ease-in-out infinite;
 	}
 </style>
