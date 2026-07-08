@@ -28,33 +28,34 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	const now = Date.now();
 	const since14 = now - 14 * 86400000;
 	const since30 = now - 30 * 86400000;
+	const admin = env.ADMIN_MINECRAFT_USERNAME;
 
-	// Sessions valides (connectés dans les 30 derniers jours, session non expirée)
-	const activeSessions = (db.prepare('SELECT COUNT(*) as c FROM sessions WHERE expires_at > ?').get(now) as { c: number }).c;
-	// Total comptes uniques toutes sessions confondues (login_events = toutes connexions historiques)
-	const uniqueUsers    = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events').get() as { c: number }).c;
+	// Sessions valides (connectés dans les 30 derniers jours, session non expirée) — hors admin
+	const activeSessions = (db.prepare('SELECT COUNT(*) as c FROM sessions WHERE expires_at > ? AND username != ?').get(now, admin) as { c: number }).c;
+	// Total comptes uniques toutes sessions confondues — hors admin
+	const uniqueUsers    = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events WHERE username != ?').get(admin) as { c: number }).c;
 	const totalDownloads = (db.prepare('SELECT COALESCE(SUM(count), 0) as c FROM download_stats').get() as { c: number }).c;
 	const totalVotes     = (db.prepare('SELECT COUNT(*) as c FROM vote_history').get() as { c: number }).c;
-	const totalLogins    = (db.prepare('SELECT COUNT(*) as c FROM login_events').get() as { c: number }).c;
+	const totalLogins    = (db.prepare('SELECT COUNT(*) as c FROM login_events WHERE username != ?').get(admin) as { c: number }).c;
 
-	// Actifs 7 derniers jours
+	// Actifs 7 derniers jours — hors admin
 	const since7  = now - 7 * 86400000;
-	const active7 = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events WHERE ts > ?').get(since7) as { c: number }).c;
+	const active7 = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events WHERE ts > ? AND username != ?').get(since7, admin) as { c: number }).c;
 
-	// Liste des sessions actives avec détail
+	// Liste des sessions actives avec détail — hors admin
 	const SESSION_TTL = 30 * 86_400_000;
 	const activeUsersList = db.prepare(`
 		SELECT username, uuid, skin_url, expires_at,
 		       (expires_at - ${SESSION_TTL}) as connected_at
 		FROM sessions
-		WHERE expires_at > ?
+		WHERE expires_at > ? AND username != ?
 		ORDER BY expires_at DESC
 		LIMIT 100
-	`).all(now) as { username: string; uuid: string; skin_url: string | null; expires_at: number; connected_at: number }[];
+	`).all(now, admin) as { username: string; uuid: string; skin_url: string | null; expires_at: number; connected_at: number }[];
 
 	const rawLogins = db.prepare(`
-		SELECT date, COUNT(*) as count FROM login_events WHERE ts > ? GROUP BY date ORDER BY date ASC
-	`).all(since14) as { date: string; count: number }[];
+		SELECT date, COUNT(*) as count FROM login_events WHERE ts > ? AND username != ? GROUP BY date ORDER BY date ASC
+	`).all(since14, admin) as { date: string; count: number }[];
 	const dailyLogins = fillDays(rawLogins, 14);
 
 	const topVoters = db.prepare(`
