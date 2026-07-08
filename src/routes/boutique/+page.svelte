@@ -2,6 +2,7 @@
 	import { slide, fade } from 'svelte/transition';
 	import GradeCard from '$lib/components/GradeCard.svelte';
 	import { shopGrades, gameRanks } from '$lib/data/grades';
+	import SEO from '$lib/components/SEO.svelte';
 
 	import imgKaigen from '$lib/img/grade boutique/kaigen.png';
 	import imgRaijin from '$lib/img/grade boutique/raijin.png';
@@ -37,9 +38,31 @@
 	];
 
 	const rankColors = ['#6b7280','#22c55e','#3b82f6','#f59e0b','#ef4444','#a855f7','#f59e0b'];
+
+	const faqSchema = {
+		'@type': 'FAQPage',
+		mainEntity: faq.map(({ q, a }) => ({
+			'@type': 'Question',
+			name: q,
+			acceptedAnswer: { '@type': 'Answer', text: a }
+		}))
+	};
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Boutique', item: 'https://playshinsei.fr/boutique' }
+		]
+	};
 </script>
 
-<svelte:head><title>Boutique — SHINSEI 新世</title></svelte:head>
+<SEO
+	title="Boutique Shinsei – Grades Cosmétiques | Serveur Minecraft MMORPG"
+	description="Soutenez le serveur Shinsei avec des grades cosmétiques. Aucun pay-to-win : Kaigen, Raijin, Oni, Shogun, Archon. Paiement unique, grade permanent."
+	canonical="https://playshinsei.fr/boutique"
+	jsonLd={[faqSchema, breadcrumbSchema]}
+/>
 
 <style>
 	.grades-grid {

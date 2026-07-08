@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import type { PageData } from './$types';
+	import SEO from '$lib/components/SEO.svelte';
 
 	import type { PlayerProfile } from './+page.server';
 	import { gameRanks, shopGrades } from '$lib/data/grades';
@@ -122,7 +123,12 @@
 	]);
 </script>
 
-<svelte:head><title>{user.username} — SHINSEI 新世</title></svelte:head>
+<SEO
+	title="{user.username} – Profil Shinsei"
+	description="Profil du joueur {user.username} sur le serveur Minecraft MMORPG Shinsei."
+	canonical="https://playshinsei.fr/profil"
+	noindex={true}
+/>
 
 <div class="page-wrap" style="min-height:100vh; padding:2rem 1.5rem 4rem; max-width:72rem; margin:0 auto;">
 

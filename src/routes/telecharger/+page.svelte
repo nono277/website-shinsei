@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
 	import loadingBg from '$lib/img/loading/loading.png';
+	import SEO from '$lib/components/SEO.svelte';
 
 	interface ChangelogEntry { version: string; date: string; changes: string[]; }
 
@@ -83,9 +84,45 @@
 
 	let openChangelog = $state<string | null>(currentVersion);
 	let openFaq       = $state<number | null>(null);
+
+	const softwareSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'SoftwareApplication',
+		name: 'Shinsei Launcher',
+		description: 'Launcher officiel du serveur Minecraft MMORPG Shinsei. Téléchargement gratuit, mise à jour automatique, connexion Microsoft intégrée.',
+		url: 'https://playshinsei.fr/telecharger',
+		applicationCategory: 'GameApplication',
+		operatingSystem: 'Windows 10, Windows 11',
+		softwareVersion: currentVersion,
+		offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+		publisher: { '@type': 'Organization', name: 'Shinsei', url: 'https://playshinsei.fr' },
+	};
+
+	const faqSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: faq.map(({ q, a }) => ({
+			'@type': 'Question',
+			name: q,
+			acceptedAnswer: { '@type': 'Answer', text: a },
+		})),
+	};
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Télécharger', item: 'https://playshinsei.fr/telecharger' }
+		]
+	};
 </script>
 
-<svelte:head><title>Télécharger — SHINSEI 新世</title></svelte:head>
+<SEO
+	title="Télécharger le Launcher Shinsei – Serveur Minecraft MMORPG Français"
+	description="Télécharge gratuitement le launcher officiel de Shinsei. Installation en 3 clics, mods automatiques, connexion Microsoft. Compatible Windows 10/11."
+	canonical="https://playshinsei.fr/telecharger"
+	jsonLd={[softwareSchema, faqSchema, breadcrumbSchema]}
+/>
 
 <!-- ── HERO ── -->
 <section style="position:relative; padding:10rem 1.5rem; text-align:center; overflow:hidden; background:#0a0a0f;">

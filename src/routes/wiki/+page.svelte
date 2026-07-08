@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { classes }                      from '$lib/data/classes';
+	import SEO from '$lib/components/SEO.svelte';
 	import { gameRanks }                    from '$lib/data/grades';
 	import { factions, loreText, timeline, dungeons, factionRelations, guildRanks, guildChunkLimits, guildCommands, guildTypes } from '$lib/data/lore';
 	import { commandCategories, statInfos, classMechanics, failleRanks, failleRules, difficultyModes } from '$lib/data/wiki';
@@ -70,9 +71,22 @@
 		{ title:'Territoires protégés',    icon:'🛡️', color:'#06b6d4',
 		  desc:"Les claims (perso ou de guilde) empêchent les non-autorisés de casser/poser des blocs et d'ouvrir tes coffres. Règle l'accès en Privé, Faction ou Public via /claim access. Impossible de claim sur une faille active." },
 	];
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Wiki', item: 'https://playshinsei.fr/wiki' }
+		]
+	};
 </script>
 
-<svelte:head><title>Wiki — SHINSEI 新世</title></svelte:head>
+<SEO
+	title="Wiki Shinsei – Lore, Classes, Rangs, Factions, Guildes | Serveur Minecraft MMORPG"
+	description="Wiki complet du serveur Minecraft MMORPG Shinsei : lore post-apocalyptique, 5 classes, 7 rangs d'Éveillé, 3 factions, guildes, failles dimensionnelles et donjons."
+	canonical="https://playshinsei.fr/wiki"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height:100vh;display:flex;background:#0a0a0f;position:relative;">
 
@@ -254,7 +268,7 @@
 						background:#050508;
 						margin-bottom:1.75rem;
 					">
-						<img src={iconClassImg} alt="Les 5 classes" style="width:100%;max-height:260px;object-fit:contain;" />
+						<img src={iconClassImg} alt="Les 5 classes Shinsei" width="500" height="500" loading="lazy" style="width:100%;max-height:260px;object-fit:contain;" />
 					</div>
 
 					<!-- Sélecteur de classe -->
@@ -313,7 +327,7 @@
 												<span style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1.05rem;color:{currentClass.color};">{ability.name}</span>
 												{#if ability.isSS}
 													<div style="display:flex;align-items:center;gap:0.35rem;">
-														<img src={rankSS} alt="SS" style="width:20px;height:20px;object-fit:contain;mix-blend-mode:screen;" />
+														<img src={rankSS} alt="SS" width="230" height="230" loading="lazy" style="width:20px;height:20px;object-fit:contain;mix-blend-mode:screen;" />
 														<span style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:0.25rem;background:{currentClass.color}20;color:{currentClass.color};border:1px solid {currentClass.color}40;letter-spacing:0.08em;">RANG SS REQUIS</span>
 													</div>
 												{:else}
@@ -346,7 +360,7 @@
 						{#each rankShowcase as r, i}
 							<div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;" in:fly={{ y:10, delay:i*50, duration:200 }}>
 								{#if r.icon}
-									<img src={r.icon} alt="Rang {r.label}" style="width:52px;height:52px;object-fit:contain;mix-blend-mode:screen;" />
+									<img src={r.icon} alt="Rang {r.label}" width="230" height="230" loading="lazy" style="width:52px;height:52px;object-fit:contain;mix-blend-mode:screen;" />
 								{:else}
 									<div style="width:52px;height:52px;display:flex;align-items:center;justify-content:center;border:1px dashed {r.color}60;border-radius:0.5rem;color:{r.color}80;font-size:1.3rem;">💤</div>
 								{/if}
@@ -373,7 +387,7 @@
 							onmouseleave={(e)=>(e.currentTarget as HTMLElement).style.background='#0d0d15'}>
 								<div style="display:flex;align-items:center;gap:0.75rem;">
 									{#if rankIconMap[rank.name]}
-										<img src={rankIconMap[rank.name]} alt={rank.name} style="width:36px;height:36px;object-fit:contain;mix-blend-mode:screen;" />
+										<img src={rankIconMap[rank.name]} alt="Rang {rank.name} Shinsei" width="230" height="230" loading="lazy" style="width:36px;height:36px;object-fit:contain;mix-blend-mode:screen;" />
 									{/if}
 									<div>
 										<div style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1.05rem;color:{rank.color};line-height:1;">{rank.name}</div>
@@ -603,7 +617,7 @@
 									<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">
 										<div style="display:flex;align-items:center;gap:0.75rem;">
 											{#if icon}
-												<img src={icon} alt="Rang {d.rank}" style="width:36px;height:36px;object-fit:contain;mix-blend-mode:screen;" />
+												<img src={icon} alt="Rang {d.rank}" width="230" height="230" loading="lazy" style="width:36px;height:36px;object-fit:contain;mix-blend-mode:screen;" />
 											{/if}
 											<div>
 												<h3 style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1.2rem;color:white;line-height:1;">{d.name}</h3>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { ActionData } from './$types';
+	import SEO from '$lib/components/SEO.svelte';
 
 	let { form: actionData }: { form: ActionData } = $props();
 
@@ -51,12 +52,22 @@
 
 	function focus(e: Event)  { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px #7c3aed18'; }
 	function blur(e: Event)   { (e.currentTarget as HTMLElement).style.borderColor = '#1e1530'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Support', item: 'https://playshinsei.fr/support' }
+		]
+	};
 </script>
 
-<svelte:head>
-	<title>Support — SHINSEI 新世</title>
-	<meta name="description" content="Besoin d'aide ? Ouvre un ticket de support SHINSEI. Bug, question, appel de sanction ou problème de paiement." />
-</svelte:head>
+<SEO
+	title="Support Shinsei – Aide, Bug, Sanction, Paiement | Serveur Minecraft MMORPG"
+	description="Besoin d'aide sur Shinsei ? Ouvre un ticket : bug technique, question générale, appel de sanction (ban/mute) ou problème de paiement."
+	canonical="https://playshinsei.fr/support"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height:100vh; background:#06060f; padding-top:80px; padding-bottom:60px;">
 	<div style="max-width:680px; margin:0 auto; padding:0 1.5rem;">

@@ -3,6 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import ServerStats  from '$lib/components/ServerStats.svelte';
 	import WorldMap     from '$lib/components/WorldMap.svelte';
+	import SEO          from '$lib/components/SEO.svelte';
 	import { classes }             from '$lib/data/classes';
 	import { factions, timeline }  from '$lib/data/lore';
 	import { reveal }              from '$lib/actions/reveal';
@@ -96,29 +97,33 @@
 	};
 </script>
 
-<svelte:head>
-	<title>SHINSEI 新世 — Serveur Minecraft RPG Français</title>
-	<meta name="description" content="SHINSEI est un serveur Minecraft RPG post-apocalyptique français. Rejoignez des factions, éveillez vos pouvoirs et fermez les failles dimensionnelles." />
-	<link rel="canonical" href="https://playshinsei.fr" />
-	<meta property="og:title" content="SHINSEI 新世 — Serveur Minecraft RPG Français" />
-	<meta property="og:url" content="https://playshinsei.fr" />
-	{@html `<script type="application/ld+json">${JSON.stringify({
-		"@context": "https://schema.org",
-		"@type": "VideoGame",
-		"name": "SHINSEI 新世",
-		"description": "Serveur Minecraft RPG post-apocalyptique français. Éveillez vos pouvoirs, choisissez votre faction, fermez les failles dimensionnelles.",
-		"url": "https://playshinsei.fr",
-		"genre": "RPG",
-		"gamePlatform": "Minecraft Java Edition",
-		"applicationCategory": "Game",
-		"inLanguage": "fr",
-		"publisher": {
-			"@type": "Organization",
-			"name": "SHINSEI",
-			"url": "https://playshinsei.fr"
-		}
-	})}</script>`}
-</svelte:head>
+<SEO
+	title="Shinsei – Serveur Minecraft MMORPG RPG Français"
+	description="Shinsei est un serveur Minecraft MMORPG post-apocalyptique français. 5 classes, 3 factions, 7 rangs. Rejoignez des milliers d'Éveillés et fermez les failles dimensionnelles."
+	canonical="https://playshinsei.fr"
+	ogType="website"
+	jsonLd={{
+		'@context': 'https://schema.org',
+		'@type': 'VideoGame',
+		name: 'Shinsei',
+		alternateName: 'Shinsei 新世',
+		description: 'Serveur Minecraft MMORPG post-apocalyptique français. 5 classes, 3 factions, 7 rangs. Éveillez vos pouvoirs, fermez les failles dimensionnelles.',
+		url: 'https://playshinsei.fr',
+		image: 'https://playshinsei.fr/og-image.png',
+		genre: ['RPG', 'MMORPG', 'Action'],
+		gamePlatform: 'Minecraft Java Edition',
+		playMode: 'MultiPlayer',
+		applicationCategory: 'Game',
+		operatingSystem: 'Windows',
+		inLanguage: 'fr',
+		numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 1 },
+		publisher: {
+			'@type': 'Organization',
+			name: 'Shinsei',
+			url: 'https://playshinsei.fr',
+		},
+	}}
+/>
 
 <!-- ══════════════════════════════════════════════════════════
      HERO
@@ -165,11 +170,14 @@
 			</div>
 
 			<div in:fly={{ y: 30, duration: 800, delay: 200 }}>
-				<img
-					src={logoImg}
-					alt="SHINSEI 新世"
-					style="width: clamp(180px, 22vw, 280px); filter: drop-shadow(0 0 35px #7c3aed90) drop-shadow(0 0 70px #7c3aed40);"
-				/>
+				<h1 style="margin: 0;">
+					<img
+						src={logoImg}
+						alt="Shinsei – Serveur Minecraft MMORPG Français"
+						width="500" height="500"
+						style="width: clamp(180px, 22vw, 280px); height: auto; filter: drop-shadow(0 0 35px #7c3aed90) drop-shadow(0 0 70px #7c3aed40);"
+					/>
+				</h1>
 			</div>
 
 			<p in:fly={{ y: 15, duration: 600, delay: 380 }}
@@ -356,6 +364,7 @@
 							src="https://mc-heads.net/avatar/{player.username}/52"
 							alt={player.username}
 							width="52" height="52"
+							loading="lazy"
 							style="border-radius:0.375rem;image-rendering:pixelated;"
 							onerror={(e)=>{ const img = e.currentTarget as HTMLImageElement; if (!img.dataset.tried) { img.dataset.tried='1'; img.src=`https://crafatar.com/avatars/${player.uuid}?size=52&overlay`; } }}
 						/>
@@ -413,7 +422,7 @@
 
 		<!-- Screenshot ingame -->
 		<div style="border-radius:1rem;overflow:hidden;border:1px solid #7c3aed20;box-shadow:0 0 50px #7c3aed20;position:relative;">
-			<img src={ingameImg} alt="SHINSEI en jeu" style="width:100%;display:block;" />
+			<img src={ingameImg} alt="Shinsei en jeu – screenshot Minecraft MMORPG" width="1536" height="1024" loading="lazy" style="width:100%;height:auto;display:block;" />
 			<div style="position:absolute;bottom:0;left:0;right:0;padding:1rem;background:linear-gradient(to top,#0a0a0f,transparent);">
 				<p class="label-mono" style="color:#7c3aed70;">MONDE SHINSEI 新世 — EN JEU</p>
 			</div>
@@ -579,7 +588,9 @@
 						">
 							<img
 								src="https://mc-heads.net/avatar/{member.username}/96"
-								alt={member.username}
+								alt="{member.username} – Staff Shinsei"
+								width="96" height="96"
+								loading="lazy"
 								style="width:100%;height:100%;image-rendering:pixelated;"
 								onerror={(e)=>{ const img=e.currentTarget as HTMLImageElement; if(!img.dataset.tried){img.dataset.tried='1';img.src=`https://crafatar.com/avatars/${member.username}?size=96&overlay`;} }}
 							/>

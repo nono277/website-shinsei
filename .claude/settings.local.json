@@ -38,7 +38,12 @@
       "Bash(cmd.exe //c \"gradlew.bat build --console=plain --no-daemon\")",
       "Bash(sh gradlew build --console=plain --no-daemon)",
       "Bash(grep -nE \"SERVER_IP|playshinsei|25565|:[0-9]{4,5}\" \"/z/documents/shinsei/shinsei-launcher/apps/launcher/resources/shinsei-mod/ShinseiMenuMod.java\")",
-      "Bash(npx svelte-kit *)"
+      "Bash(npx svelte-kit *)",
+      "Bash(npx tsc *)",
+      "Bash(Copy-Item *)",
+      "PowerShell(Copy-Item *)",
+      "PowerShell($img = [System.Drawing.Image]::FromFile\\(\"C:\\\\Users\\\\Noufel SELLAY\\\\Documents\\\\doc nogen\\\\taffs\\\\documents perso\\\\taff perso\\\\shinsei\\\\website-shinsei\\\\static\\\\favicon.png\"\\); \"$\\($img.Width\\)x$\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "PowerShell(Get-Item *)"
     ]
   }
 }

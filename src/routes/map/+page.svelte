@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { PUBLIC_DYNMAP_URL } from '$env/static/public';
+	import SEO from '$lib/components/SEO.svelte';
 
 	let loaded = $state(false);
 	let error  = $state(false);
@@ -42,11 +43,22 @@
 		}, TIMEOUT_MS);
 		return () => { clearTimeout(timer); clearInterval(statsInterval); clearInterval(tick); };
 	});
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Carte', item: 'https://playshinsei.fr/map' }
+		]
+	};
 </script>
 
-<svelte:head>
-	<title>Carte — SHINSEI 新世</title>
-</svelte:head>
+<SEO
+	title="Carte du Monde Shinsei – Failles en Direct | Serveur Minecraft MMORPG"
+	description="Carte interactive du monde de Shinsei en temps réel. Suivez les failles dimensionnelles actives, explorez Tokyo et les zones de jeu."
+	canonical="https://playshinsei.fr/map"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="position: relative; height: calc(100vh - 60px); background: #050508; overflow: hidden;">
 

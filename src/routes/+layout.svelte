@@ -4,6 +4,33 @@
 	import Particles from '$lib/components/Particles.svelte';
 	import type { LayoutData } from './$types';
 
+	const organizationSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'Shinsei',
+		alternateName: 'Shinsei 新世',
+		url: 'https://playshinsei.fr',
+		logo: {
+			'@type': 'ImageObject',
+			url: 'https://playshinsei.fr/favicon.png',
+		},
+		sameAs: [
+			'https://discord.gg/DcN95Dbx4',
+			'https://www.youtube.com/@Shinsei-off',
+			'https://www.tiktok.com/@shinsei_officiel',
+			'https://www.instagram.com/shinsei.officiel',
+		],
+	};
+
+	const websiteSchema = {
+		'@context': 'https://schema.org',
+		'@type': 'WebSite',
+		name: 'Shinsei',
+		alternateName: 'Shinsei 新世 – Serveur Minecraft MMORPG',
+		url: 'https://playshinsei.fr',
+		inLanguage: 'fr',
+	};
+
 	let { children, data }: { children: any; data: LayoutData } = $props();
 
 	const BANNER_H = 48;
@@ -31,8 +58,8 @@
 </script>
 
 <svelte:head>
-	<title>SHINSEI 新世 — Serveur Minecraft RPG</title>
-	<meta name="description" content="SHINSEI 新世 — Serveur Minecraft RPG post-apocalyptique. Éveillez vos pouvoirs, fermez les failles." />
+	{@html `<script type="application/ld+json">${JSON.stringify(organizationSchema)}<\/script>`}
+	{@html `<script type="application/ld+json">${JSON.stringify(websiteSchema)}<\/script>`}
 </svelte:head>
 
 {#if bannerActive}
@@ -135,7 +162,7 @@
 				<div>
 					<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;">Navigation</p>
 					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
-						{#each [['/', 'Accueil'], ['/telecharger', 'Télécharger'], ['/classement', 'Classement'], ['/wiki', 'Wiki'], ['/map', 'Carte'], ['/recrutement', 'Recrutement'], ['/support', 'Support']] as [href, label]}
+						{#each [['/', 'Accueil'], ['/telecharger', 'Télécharger'], ['/classes', 'Classes'], ['/classement', 'Classement'], ['/vote', 'Vote'], ['/wiki', 'Wiki'], ['/map', 'Carte'], ['/boutique', 'Boutique'], ['/recrutement', 'Recrutement'], ['/support', 'Support']] as [href, label]}
 							<a {href} style="font-size: 0.875rem; color: #64748b; transition: color 0.2s;"
 								onmouseenter={(e) => (e.currentTarget as HTMLElement).style.color = '#7c3aed'}
 								onmouseleave={(e) => (e.currentTarget as HTMLElement).style.color = '#64748b'}>

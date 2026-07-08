@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { gameRanks } from '$lib/data/grades';
 	import { classes } from '$lib/data/classes';
+	import SEO from '$lib/components/SEO.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -48,12 +49,22 @@
 	const PODIUM_COLORS = ['#f59e0b', '#94a3b8', '#cd7c2e'];
 	const PODIUM_GLOW   = ['#f59e0b40', '#94a3b840', '#cd7c2e40'];
 	const PODIUM_ORDER  = [1, 0, 2];
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Classement', item: 'https://playshinsei.fr/classement' }
+		]
+	};
 </script>
 
-<svelte:head>
-	<title>Classement — SHINSEI</title>
-	<meta name="description" content="Classement des meilleurs joueurs du serveur SHINSEI." />
-</svelte:head>
+<SEO
+	title="Classement Shinsei – Top Joueurs XP, PvP, Donjons, Failles | Minecraft MMORPG"
+	description="Classement des meilleurs joueurs du serveur Minecraft MMORPG Shinsei. XP total, kills PvP, donjons complétés, failles fermées et top voteurs."
+	canonical="https://playshinsei.fr/classement"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height: 100vh; background: #06060f; padding-top: 80px; padding-bottom: 60px;">
 	<div style="max-width: 900px; margin: 0 auto; padding: 0 1.5rem;">

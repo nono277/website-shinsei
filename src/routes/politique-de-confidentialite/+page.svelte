@@ -1,6 +1,20 @@
-<svelte:head>
-	<title>Politique de confidentialité — SHINSEI 新世</title>
-</svelte:head>
+<script lang="ts">
+	import SEO from '$lib/components/SEO.svelte';
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Politique de confidentialité', item: 'https://playshinsei.fr/politique-de-confidentialite' }
+		]
+	};
+</script>
+<SEO
+	title="Politique de Confidentialité – Shinsei | Serveur Minecraft MMORPG"
+	description="Politique de confidentialité du site Shinsei : collecte de données, cookies, droits RGPD des utilisateurs."
+	canonical="https://playshinsei.fr/politique-de-confidentialite"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height:100vh;background:#06060f;padding-top:80px;padding-bottom:60px;">
 	<div style="max-width:760px;margin:0 auto;padding:0 1.5rem;">

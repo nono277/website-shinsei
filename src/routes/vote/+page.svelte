@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	import { VOTE_SITES, VOTE_REWARDS, REWARD_SITES, type SiteKey } from '$lib/data/vote-sites';
+	import SEO from '$lib/components/SEO.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -156,12 +157,22 @@
 			document.removeEventListener('visibilitychange', onVisibility);
 		};
 	});
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Voter', item: 'https://playshinsei.fr/vote' }
+		]
+	};
 </script>
 
-<svelte:head>
-	<title>Vote — SHINSEI</title>
-	<meta name="description" content="Votez chaque jour pour SHINSEI sur les sites partenaires et gagnez des récompenses exclusives en jeu." />
-</svelte:head>
+<SEO
+	title="Voter pour Shinsei – Récompenses Quotidiennes | Serveur Minecraft MMORPG"
+	description="Votez chaque jour pour Shinsei sur les sites partenaires et gagnez des récompenses exclusives en jeu : éclats, XP et bonus. Vote gratuit et rapide."
+	canonical="https://playshinsei.fr/vote"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height: 100vh; background: #06060f; padding-top: 80px; padding-bottom: 60px;">
 	<div style="max-width: 960px; margin: 0 auto; padding: 0 1.5rem;">

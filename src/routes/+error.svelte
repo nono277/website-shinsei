@@ -3,7 +3,8 @@
 </script>
 
 <svelte:head>
-	<title>{page.status} — SHINSEI 新世</title>
+	<title>{page.status} — Shinsei</title>
+	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div style="

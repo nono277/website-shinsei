@@ -1,6 +1,20 @@
-<svelte:head>
-	<title>Conditions d'utilisation — SHINSEI 新世</title>
-</svelte:head>
+<script lang="ts">
+	import SEO from '$lib/components/SEO.svelte';
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'CGU', item: 'https://playshinsei.fr/cgu' }
+		]
+	};
+</script>
+<SEO
+	title="CGU – Conditions Générales d'Utilisation | Shinsei"
+	description="Conditions générales d'utilisation du serveur Minecraft MMORPG Shinsei et de son site officiel playshinsei.fr."
+	canonical="https://playshinsei.fr/cgu"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height:100vh;background:#06060f;padding-top:80px;padding-bottom:60px;">
 	<div style="max-width:760px;margin:0 auto;padding:0 1.5rem;">

@@ -4,6 +4,7 @@
 	import type { PageData } from './$types';
 	import { classes } from '$lib/data/classes';
 	import { gameRanks } from '$lib/data/grades';
+	import SEO from '$lib/components/SEO.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -24,12 +25,22 @@
 			img.src = `https://crafatar.com/avatars/${uuid}?size=48&overlay`;
 		}
 	}
+
+	const breadcrumbSchema = {
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://playshinsei.fr' },
+			{ '@type': 'ListItem', position: 2, name: 'Classes', item: 'https://playshinsei.fr/classes' }
+		]
+	};
 </script>
 
-<svelte:head>
-	<title>Classes — SHINSEI</title>
-	<meta name="description" content="Découvrez les 5 classes de SHINSEI : Hunter, Titan, Arcane, Shinigami, Bête. Lore, compétences, attributs et meilleurs joueurs." />
-</svelte:head>
+<SEO
+	title="Classes Shinsei – Hunter, Titan, Arcane, Shinigami, Bête | Serveur Minecraft"
+	description="Découvrez les 5 classes de Shinsei : Hunter, Titan, Arcane, Shinigami et Bête. Lore, compétences, attributs et champions de chaque voie."
+	canonical="https://playshinsei.fr/classes"
+	jsonLd={breadcrumbSchema}
+/>
 
 <div style="min-height: 100vh; background: #06060f; padding-top: 80px; padding-bottom: 60px;">
 	<div style="max-width: 960px; margin: 0 auto; padding: 0 1.5rem;">
@@ -196,7 +207,9 @@
 								<div style="width: 48px; height: 48px; border-radius: 0.5rem; overflow: hidden; border: 2px solid {cls.color}50; background: #06060f; flex-shrink: 0;">
 									<img
 										src="https://mc-heads.net/avatar/{champion.username}/48"
-										alt={champion.username}
+										alt="{champion.username} – Champion {cls.name} Shinsei"
+										width="48" height="48"
+										loading="lazy"
 										style="width: 100%; height: 100%; image-rendering: pixelated;"
 										onerror={(e) => onHeadError(e, champion!.uuid)}
 									/>

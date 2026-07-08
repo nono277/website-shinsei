@@ -1,4 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /api/
+Disallow: /profil
+Disallow: /connexion
 
 Sitemap: https://playshinsei.fr/sitemap.xml

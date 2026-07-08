@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
+	import SEO from '$lib/components/SEO.svelte';
 
 	let username = $state('');
 	let error    = $state('');
@@ -19,7 +20,12 @@
 	}
 </script>
 
-<svelte:head><title>Lier ton compte — SHINSEI 新世</title></svelte:head>
+<SEO
+	title="Lier ton compte Minecraft – Shinsei"
+	description="Liez votre pseudo Minecraft à votre compte Shinsei."
+	canonical="https://playshinsei.fr/connexion/lier"
+	noindex={true}
+/>
 
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
 	<div style="max-width:440px;width:100%;position:relative;" class="connexion-card-wrap">

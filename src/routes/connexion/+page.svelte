@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { page } from '$app/stores';
+	import SEO from '$lib/components/SEO.svelte';
 
 	const ERROR_MESSAGES: Record<string, string> = {
 		access_denied:  'Connexion annulée.',
@@ -16,7 +17,12 @@
 	const errorMsg = $derived(error ? (ERROR_MESSAGES[error] ?? 'Une erreur est survenue.') : null);
 </script>
 
-<svelte:head><title>Connexion — SHINSEI 新世</title></svelte:head>
+<SEO
+	title="Connexion – Shinsei"
+	description="Connectez-vous à votre compte Shinsei avec votre compte Microsoft Minecraft."
+	canonical="https://playshinsei.fr/connexion"
+	noindex={true}
+/>
 
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
 	<div style="max-width:440px;width:100%;position:relative;" class="connexion-card-wrap">
