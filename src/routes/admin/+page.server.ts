@@ -4,7 +4,6 @@ import { env } from '$env/dynamic/private';
 import { getMaintenanceConfig, setConfig } from '$lib/server/siteConfig';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	console.log('[admin] user:', locals.user?.username, '| env:', env.ADMIN_MINECRAFT_USERNAME);
 	if (!locals.user || locals.user.username !== env.ADMIN_MINECRAFT_USERNAME) {
 		throw redirect(302, '/');
 	}

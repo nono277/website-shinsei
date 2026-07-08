@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -73,12 +74,13 @@
 		</div>
 
 		<!-- Form -->
-		<form method="POST" action="?/save" style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+		<form method="POST" action="?/save" use:enhance style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
 
 			<!-- Toggle maintenance -->
-			<label style="display: flex; align-items: center; gap: 1rem; cursor: pointer; user-select: none;">
-				<div style="position: relative; width: 48px; height: 26px; flex-shrink: 0;" onclick={() => enabled = !enabled} role="none">
-					<input type="checkbox" name="enabled" bind:checked={enabled} style="position:absolute; opacity:0; width:0; height:0;" />
+			<div style="display: flex; align-items: center; gap: 1rem; cursor: pointer; user-select: none;"
+				role="none" onclick={() => { enabled = !enabled; }}>
+				<div style="position: relative; width: 48px; height: 26px; flex-shrink: 0; pointer-events: none;">
+					<input type="checkbox" name="enabled" checked={enabled} style="position:absolute; opacity:0; width:0; height:0;" />
 					<div style="
 						width: 100%; height: 100%; border-radius: 9999px;
 						background: {enabled ? '#7c3aed' : '#1e293b'};
@@ -101,7 +103,7 @@
 						{enabled ? 'Le bandeau rouge est visible sur tout le site' : 'Le site est accessible normalement'}
 					</div>
 				</div>
-			</label>
+			</div>
 
 			<!-- End date -->
 			<div>

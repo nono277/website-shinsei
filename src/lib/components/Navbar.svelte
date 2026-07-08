@@ -10,6 +10,7 @@
 
 	let currentPath = $derived(page.url.pathname);
 	let user = $derived(page.data.user as { uuid: string; username: string } | null | undefined);
+	let isAdmin = $derived(page.data.isAdmin as boolean | undefined);
 
 	const links = [
 		{ href: '/',            label: 'Accueil'    },
@@ -116,6 +117,32 @@
 				</div>
 				<span style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.04em;">{user.username}</span>
 			</a>
+			{#if isAdmin}
+				<a
+					href="/admin"
+					title="Panel Admin"
+					style="
+						display: flex; align-items: center; justify-content: center;
+						width: 34px; height: 34px; border-radius: 50%;
+						background: {currentPath.startsWith('/admin') ? '#7c3aed20' : 'transparent'};
+						border: 1px solid {currentPath.startsWith('/admin') ? '#7c3aed50' : '#1e1530'};
+						color: {currentPath.startsWith('/admin') ? '#a78bfa' : '#475569'};
+						transition: all 0.18s; text-decoration: none;
+					"
+					onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed50'; (e.currentTarget as HTMLElement).style.color = '#a78bfa'; (e.currentTarget as HTMLElement).style.background = '#7c3aed15'; }}
+					onmouseleave={(e) => {
+						if (!currentPath.startsWith('/admin')) {
+							(e.currentTarget as HTMLElement).style.borderColor = '#1e1530';
+							(e.currentTarget as HTMLElement).style.color = '#475569';
+							(e.currentTarget as HTMLElement).style.background = 'transparent';
+						}
+					}}
+				>
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+						<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+					</svg>
+				</a>
+			{/if}
 			<form method="POST" action="/api/auth/logout" style="margin: 0;">
 				<button
 					type="submit"
@@ -230,6 +257,23 @@
 						<p style="font-size: 0.7rem; color: #7c3aed;">Voir mon profil →</p>
 					</div>
 				</a>
+				{#if isAdmin}
+					<a
+						href="/admin"
+						onclick={() => menuOpen = false}
+						style="
+							display: flex; align-items: center; gap: 0.5rem;
+							width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.8rem; font-weight: 700;
+							padding: 0.55rem 0.75rem; background: #7c3aed15; border: 1px solid #7c3aed30; color: #a78bfa;
+							border-radius: 0.375rem; text-decoration: none; margin-bottom: 0.4rem;
+						"
+					>
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+							<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+						</svg>
+						PANEL ADMIN
+					</a>
+				{/if}
 				<form method="POST" action="/api/auth/logout" style="margin: 0;">
 					<button type="submit" onclick={() => menuOpen = false} style="
 						width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.8rem; font-weight: 700;
