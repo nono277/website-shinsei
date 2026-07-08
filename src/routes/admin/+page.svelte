@@ -30,34 +30,327 @@
 		return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 			+ ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 	}
+
+	function fmt(n: number): string {
+		return n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + 'k' : String(n);
+	}
+
+	const maxLogins = $derived(Math.max(...data.dailyLogins.map(d => d.count), 1));
+	const maxVotes  = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
+
+	// ── Console serveur ──────────────────────────────────────────────
+	let mcRunning   = $state(false);
+	let mcLogs      = $state<string[]>([]);
+	let mcStatus    = $state('');
+	let mcLoading   = $state(false);
+	let consoleEl   = $state<HTMLElement | null>(null);
+
+	async function fetchStatus() {
+		try {
+			const r = await fetch('/api/admin/server?action=status');
+			if (r.ok) { const d = await r.json(); mcRunning = d.running ?? false; }
+		} catch { /* offline */ }
+	}
+
+	async function fetchLogs() {
+		try {
+			const r = await fetch('/api/admin/server?action=logs');
+			if (r.ok) {
+				const d = await r.json();
+				mcLogs = d.lines ?? [];
+				// auto-scroll
+				setTimeout(() => { if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight; }, 30);
+			}
+		} catch { /* offline */ }
+	}
+
+	async function serverAction(action: 'start' | 'stop') {
+		mcLoading = true;
+		mcStatus = '';
+		try {
+			const r = await fetch('/api/admin/server', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ action }),
+			});
+			const d = await r.json();
+			mcStatus = d.message ?? d.error ?? '';
+			await fetchStatus();
+		} catch {
+			mcStatus = 'Erreur réseau';
+		} finally {
+			mcLoading = false;
+		}
+	}
+
+	function logColor(line: string): string {
+		const l = line.toLowerCase();
+		if (l.includes('error') || l.includes('exception') || l.includes('fatal')) return '#f87171';
+		if (l.includes('warn')) return '#fbbf24';
+		if (l.includes('[chat]') || l.includes('<')) return '#67e8f9';
+		if (l.includes('joined') || l.includes('left') || l.includes('logged')) return '#86efac';
+		return '#94a3b8';
+	}
+
+	$effect(() => {
+		fetchStatus();
+		fetchLogs();
+		const statusInterval = setInterval(fetchStatus, 8000);
+		const logsInterval   = setInterval(fetchLogs,   5000);
+		return () => { clearInterval(statusInterval); clearInterval(logsInterval); };
+	});
 </script>
 
 <svelte:head>
 	<title>Panel Admin — SHINSEI</title>
 </svelte:head>
 
-<div style="min-height: 80vh; padding: 2.5rem 1.25rem; max-width: 52rem; margin: 0 auto;">
+<div style="min-height: 80vh; padding: 2rem 1.25rem; max-width: 64rem; margin: 0 auto;">
 
 	<!-- Header -->
-	<div style="margin-bottom: 2.5rem;">
-		<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
-			<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.2">
-				<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
-			</svg>
-			<h1 style="font-family:'Rajdhani',sans-serif; font-size: 1.8rem; font-weight: 900; color: #7c3aed; text-shadow: 0 0 24px #7c3aed60; letter-spacing: 0.05em; margin: 0;">
-				PANEL ADMINISTRATEUR
-			</h1>
+	<div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+		<div>
+			<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.3rem;">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.2">
+					<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+				</svg>
+				<h1 style="font-family:'Rajdhani',sans-serif; font-size: 1.6rem; font-weight: 900; color: #7c3aed; text-shadow: 0 0 20px #7c3aed50; letter-spacing: 0.05em; margin: 0;">
+					PANEL ADMINISTRATEUR
+				</h1>
+			</div>
+			<div style="display: flex; align-items: center; gap: 0.5rem; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #64748b;">
+				<div style="width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e80;"></div>
+				Connecté · <span style="color: #06b6d4;">{data.adminUser}</span>
+			</div>
 		</div>
-		<div style="display: flex; align-items: center; gap: 0.5rem; font-family:'Share Tech Mono',monospace; font-size: 0.75rem; color: #64748b;">
-			<div style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 7px #22c55e80;"></div>
-			Connecté en tant que <span style="color: #06b6d4; margin-left: 0.25rem;">{data.adminUser}</span>
+		<!-- Server status pill -->
+		<div style="
+			display: flex; align-items: center; gap: 0.6rem;
+			padding: 0.4rem 1rem; border-radius: 9999px;
+			background: {data.server.online ? '#052e16' : '#1c0a09'};
+			border: 1px solid {data.server.online ? '#16a34a40' : '#ef444430'};
+			font-family:'Share Tech Mono',monospace; font-size: 0.72rem;
+		">
+			<div style="width: 7px; height: 7px; border-radius: 50%; background: {data.server.online ? '#22c55e' : '#ef4444'}; box-shadow: 0 0 8px {data.server.online ? '#22c55e' : '#ef4444'};"></div>
+			<span style="color: {data.server.online ? '#4ade80' : '#f87171'};">Serveur {data.server.online ? 'EN LIGNE' : 'HORS LIGNE'}</span>
+			{#if data.server.online}
+				<span style="color: #64748b;">·</span>
+				<span style="color: #94a3b8;">{data.server.players} joueurs</span>
+			{/if}
+		</div>
+	</div>
+
+	<!-- Stat cards -->
+	<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem;" class="sm:grid-cols-4">
+
+		{#each [
+			{ label: 'Sessions actives',  value: data.stats.activeSessions,  icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75', color: '#06b6d4', bg: '#0c1a2e' },
+			{ label: 'Comptes enregistrés', value: data.stats.uniqueUsers,  icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM19 8l2 2 4-4', color: '#7c3aed', bg: '#150d2e' },
+			{ label: 'Lancements launcher', value: data.stats.totalDownloads, icon: 'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3', color: '#f59e0b', bg: '#1c1203' },
+			{ label: 'Votes reçus',        value: data.stats.totalVotes,    icon: 'M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3', color: '#22c55e', bg: '#051a0e' },
+		] as card}
+			<div style="background: {card.bg}; border: 1px solid {card.color}20; border-radius: 0.75rem; padding: 1rem 1.25rem;">
+				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+					<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">{card.label}</span>
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={card.color} stroke-width="2" opacity="0.7">
+						<path d={card.icon}/>
+					</svg>
+				</div>
+				<div style="font-family:'Rajdhani',sans-serif; font-size: 2rem; font-weight: 900; color: {card.color}; text-shadow: 0 0 16px {card.color}40; line-height: 1;">
+					{fmt(card.value)}
+				</div>
+			</div>
+		{/each}
+	</div>
+
+	<!-- Server details + Top voters -->
+	<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;" class="sm:grid-cols-2">
+
+		<!-- Server details -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 1rem;">Serveur Minecraft</p>
+			{#if data.server.online}
+				{#each [
+					{ label: 'Joueurs en ligne', value: data.server.players, color: '#4ade80' },
+					{ label: 'Donjons actifs',  value: data.server.donjons,  color: '#c084fc' },
+					{ label: 'Failles ouvertes', value: data.server.failles, color: '#38bdf8' },
+				] as row}
+					<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #1e153040;">
+						<span style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #64748b;">{row.label}</span>
+						<span style="font-family:'Rajdhani',sans-serif; font-size: 1.1rem; font-weight: 700; color: {row.color};">{row.value}</span>
+					</div>
+				{/each}
+				<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.4rem 0;">
+					<span style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #64748b;">Connexions totales</span>
+					<span style="font-family:'Rajdhani',sans-serif; font-size: 1.1rem; font-weight: 700; color: #7c3aed;">{fmt(data.stats.totalLogins)}</span>
+				</div>
+			{:else}
+				<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #1c0a09; border-radius: 0.5rem; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #f87171;">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+					Serveur inaccessible
+				</div>
+			{/if}
+		</div>
+
+		<!-- Top voters -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 1rem;">Top voteurs <span style="color:#374151; font-size:0.65rem;">(30 jours)</span></p>
+			{#if data.topVoters.length === 0}
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #374151;">Aucun vote ce mois</p>
+			{:else}
+				{#each data.topVoters as voter, i}
+					<div style="margin-bottom: 0.6rem;">
+						<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">
+							<span style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: {i === 0 ? '#fde68a' : i === 1 ? '#94a3b8' : i === 2 ? '#c2884f' : '#475569'};">
+								{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`} {voter.username}
+							</span>
+							<span style="font-family:'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 700; color: #22c55e;">{voter.count}</span>
+						</div>
+						<div style="height: 3px; background: #1e1530; border-radius: 9999px; overflow: hidden;">
+							<div style="height: 100%; width: {Math.round((voter.count / maxVotes) * 100)}%; background: linear-gradient(to right, #16a34a, #4ade80); border-radius: 9999px;"></div>
+						</div>
+					</div>
+				{/each}
+			{/if}
+		</div>
+	</div>
+
+	<!-- Daily logins chart -->
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+		<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Connexions par jour</p>
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">14 derniers jours</span>
+		</div>
+
+		<!-- Bars -->
+		<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px; padding-bottom: 0;">
+			{#each data.dailyLogins as day}
+				{@const pct = Math.round((day.count / maxLogins) * 100)}
+				<div
+					style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
+					background: {day.count > 0 ? 'linear-gradient(to top, #7c3aed, #a78bfa)' : '#1e1530'};
+					border-radius: 2px 2px 0 0; transition: height 0.3s; cursor: default;"
+					title="{day.count} connexion{day.count !== 1 ? 's' : ''} · {day.date}"
+				></div>
+			{/each}
+		</div>
+
+		<!-- X axis labels (every 2nd label to avoid overlap) -->
+		<div style="display: flex; gap: 3px; margin-top: 5px;">
+			{#each data.dailyLogins as day, i}
+				<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">
+					{day.label}
+				</div>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Console serveur Minecraft -->
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden; margin-bottom: 1rem;">
+
+		<!-- Header -->
+		<div style="padding: 1rem 1.5rem; border-bottom: 1px solid #1e1530; background: #0a0a12; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+			<div>
+				<h2 style="font-family:'Rajdhani',sans-serif; font-size: 1.05rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.06em; margin: 0 0 0.15rem;">
+					CONSOLE SERVEUR MINECRAFT
+				</h2>
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #475569; margin: 0;">
+					/home/shinsei-serv · screen shinsei-mc · logs/latest.log
+				</p>
+			</div>
+
+			<!-- Status + boutons -->
+			<div style="display: flex; align-items: center; gap: 0.75rem;">
+				<!-- Status pill -->
+				<div style="display: flex; align-items: center; gap: 0.45rem; font-family:'Share Tech Mono',monospace; font-size: 0.7rem; padding: 0.3rem 0.75rem; border-radius: 9999px; background: {mcRunning ? '#052e16' : '#1c0a09'}; border: 1px solid {mcRunning ? '#16a34a40' : '#ef444430'};">
+					<div style="width: 6px; height: 6px; border-radius: 50%; background: {mcRunning ? '#22c55e' : '#ef4444'}; box-shadow: 0 0 6px {mcRunning ? '#22c55e' : '#ef4444'};"></div>
+					<span style="color: {mcRunning ? '#4ade80' : '#f87171'};">{mcRunning ? 'EN LIGNE' : 'HORS LIGNE'}</span>
+				</div>
+
+				<!-- Stop -->
+				<button
+					onclick={() => serverAction('stop')}
+					disabled={!mcRunning || mcLoading}
+					style="
+						display: flex; align-items: center; gap: 0.4rem;
+						font-family:'Rajdhani',sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
+						padding: 0.4rem 1rem; border-radius: 0.4rem; cursor: {!mcRunning || mcLoading ? 'not-allowed' : 'pointer'};
+						background: {!mcRunning || mcLoading ? '#1c1c1c' : '#450a0a'};
+						border: 1px solid {!mcRunning || mcLoading ? '#374151' : '#ef444450'};
+						color: {!mcRunning || mcLoading ? '#4b5563' : '#f87171'};
+						transition: all 0.2s;
+					"
+					onmouseenter={(e) => { if (mcRunning && !mcLoading) (e.currentTarget as HTMLElement).style.background = '#7f1d1d'; }}
+					onmouseleave={(e) => { if (mcRunning && !mcLoading) (e.currentTarget as HTMLElement).style.background = '#450a0a'; }}
+				>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+					STOP
+				</button>
+
+				<!-- Start -->
+				<button
+					onclick={() => serverAction('start')}
+					disabled={mcRunning || mcLoading}
+					style="
+						display: flex; align-items: center; gap: 0.4rem;
+						font-family:'Rajdhani',sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
+						padding: 0.4rem 1rem; border-radius: 0.4rem; cursor: {mcRunning || mcLoading ? 'not-allowed' : 'pointer'};
+						background: {mcRunning || mcLoading ? '#1c1c1c' : '#052e16'};
+						border: 1px solid {mcRunning || mcLoading ? '#374151' : '#16a34a50'};
+						color: {mcRunning || mcLoading ? '#4b5563' : '#4ade80'};
+						transition: all 0.2s;
+					"
+					onmouseenter={(e) => { if (!mcRunning && !mcLoading) (e.currentTarget as HTMLElement).style.background = '#14532d'; }}
+					onmouseleave={(e) => { if (!mcRunning && !mcLoading) (e.currentTarget as HTMLElement).style.background = '#052e16'; }}
+				>
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+					START
+				</button>
+			</div>
+		</div>
+
+		<!-- Message retour action -->
+		{#if mcStatus}
+			<div style="padding: 0.5rem 1.5rem; background: #0d0d15; border-bottom: 1px solid #1e1530; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #06b6d4;">
+				→ {mcStatus}
+			</div>
+		{/if}
+
+		<!-- Console logs -->
+		<div
+			bind:this={consoleEl}
+			style="
+				height: 420px; overflow-y: auto; padding: 0.75rem 1rem;
+				background: #020204; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem;
+				line-height: 1.5;
+				scrollbar-width: thin; scrollbar-color: #1e1530 transparent;
+			"
+		>
+			{#if mcLogs.length === 0}
+				<span style="color: #374151;">Chargement des logs...</span>
+			{:else}
+				{#each mcLogs as line}
+					<div style="color: {logColor(line)}; white-space: pre-wrap; word-break: break-all;">{line}</div>
+				{/each}
+			{/if}
+		</div>
+
+		<!-- Footer -->
+		<div style="padding: 0.5rem 1rem; background: #0a0a12; border-top: 1px solid #1e1530; display: flex; align-items: center; justify-content: space-between;">
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.62rem; color: #374151;">
+				Rafraîchissement auto toutes les 5s · {mcLogs.length} lignes
+			</span>
+			<button
+				onclick={() => { fetchStatus(); fetchLogs(); }}
+				style="font-family:'Share Tech Mono',monospace; font-size: 0.62rem; color: #475569; background: none; border: none; cursor: pointer; padding: 0.2rem 0.5rem;"
+				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.color = '#7c3aed'; }}
+				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569'; }}
+			>↺ Rafraîchir</button>
 		</div>
 	</div>
 
 	<!-- Maintenance card -->
-	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden; margin-bottom: 1.5rem;">
-
-		<!-- Card header -->
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
 		<div style="padding: 1rem 1.5rem; border-bottom: 1px solid #1e1530; display: flex; align-items: center; justify-content: space-between; background: #0a0a12;">
 			<div>
 				<h2 style="font-family:'Rajdhani',sans-serif; font-size: 1.05rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.06em; margin: 0 0 0.15rem;">
@@ -68,15 +361,14 @@
 				</p>
 			</div>
 			<div style="display: flex; align-items: center; gap: 0.5rem; font-family:'Share Tech Mono',monospace; font-size: 0.72rem;">
-				<div style="width: 8px; height: 8px; border-radius: 50%; background: {data.maintenance.enabled ? '#22c55e' : '#475569'}; box-shadow: {data.maintenance.enabled ? '0 0 8px #22c55e' : 'none'}; transition: all 0.3s;"></div>
+				<div style="width: 8px; height: 8px; border-radius: 50%; background: {data.maintenance.enabled ? '#22c55e' : '#475569'}; box-shadow: {data.maintenance.enabled ? '0 0 8px #22c55e' : 'none'};"></div>
 				<span style="color: {data.maintenance.enabled ? '#22c55e' : '#475569'};">{data.maintenance.enabled ? 'ACTIF' : 'INACTIF'}</span>
 			</div>
 		</div>
 
-		<!-- Form -->
-		<form method="POST" action="?/save" use:enhance style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+		<form method="POST" action="?/save" use:enhance style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
 
-			<!-- Toggle maintenance -->
+			<!-- Toggle -->
 			<div style="display: flex; align-items: center; gap: 1rem; cursor: pointer; user-select: none;"
 				role="none" onclick={() => { enabled = !enabled; }}>
 				<div style="position: relative; width: 48px; height: 26px; flex-shrink: 0; pointer-events: none;">
@@ -105,157 +397,73 @@
 				</div>
 			</div>
 
-			<!-- End date -->
-			<div>
-				<label for="endDate" style="display: block; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem;">
-					Date et heure de fin prévue
-				</label>
-				<input
-					id="endDate"
-					type="datetime-local"
-					name="endDate"
-					bind:value={endDate}
-					style="
-						width: 100%; padding: 0.6rem 0.75rem;
-						background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem;
-						color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.875rem;
-						outline: none; transition: border-color 0.2s; box-sizing: border-box;
-						color-scheme: dark;
-					"
-					onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; }}
-					onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
-				/>
-				{#if endDate}
-					<div style="display: flex; align-items: center; gap: 1.5rem; margin-top: 0.45rem; font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #64748b;">
-						<span>→ {fmtDate(endDate)}</span>
-						{#if countdown}
-							<span style="color: {countdown === 'Expiré' ? '#ef4444' : '#06b6d4'};">
-								{countdown === 'Expiré' ? '⚠ Date dépassée' : `Reste : ${countdown}`}
-							</span>
-						{/if}
+			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="sm:grid-cols-2">
+				<!-- End date -->
+				<div>
+					<label for="endDate" style="display: block; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.4rem;">
+						Fin prévue
+					</label>
+					<input id="endDate" type="datetime-local" name="endDate" bind:value={endDate}
+						style="width: 100%; padding: 0.55rem 0.75rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.8rem; outline: none; transition: border-color 0.2s; box-sizing: border-box; color-scheme: dark;"
+						onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; }}
+						onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
+					/>
+					{#if countdown}
+						<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: {countdown === 'Expiré' ? '#ef4444' : '#64748b'}; margin-top: 0.3rem;">
+							{countdown === 'Expiré' ? '⚠ Date dépassée' : `Reste : ${countdown}`}
+						</p>
+					{/if}
+				</div>
+
+				<!-- Message -->
+				<div>
+					<label for="message" style="display: block; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.4rem;">
+						Message
+					</label>
+					<textarea id="message" name="message" bind:value={message} rows="2"
+						placeholder="Ex : Mise à jour majeure en cours..."
+						style="width: 100%; padding: 0.55rem 0.75rem; background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem; color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.8rem; outline: none; resize: none; transition: border-color 0.2s; box-sizing: border-box;"
+						onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; }}
+						onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
+					></textarea>
+				</div>
+			</div>
+
+			<!-- Preview -->
+			{#if enabled}
+				<div style="position: relative; overflow: hidden; height: 40px; border-radius: 0.4rem; display: flex; align-items: center;
+					background: repeating-linear-gradient(135deg, #7f1d1d 0px, #7f1d1d 16px, #9b1c1c 16px, #9b1c1c 32px);
+					border: 1px solid #ef444460;">
+					<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.28);"></div>
+					<div style="position: relative; z-index:1; display:flex; align-items:center; gap:0.5rem; padding: 0 0.75rem; width:100%; font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:white; overflow:hidden;">
+						<span style="font-weight:700; color:#fde68a; flex-shrink:0;">⚙ MAINTENANCE EN COURS</span>
+						<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">— {message || '...'}</span>
+						{#if endDate}<span style="flex-shrink:0; color:#fed7aa; font-size:0.65rem;">{fmtDate(endDate)}</span>{/if}
 					</div>
-				{/if}
-			</div>
+				</div>
+			{/if}
 
-			<!-- Message -->
-			<div>
-				<label for="message" style="display: block; font-family:'Share Tech Mono',monospace; font-size: 0.72rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem;">
-					Message du bandeau
-				</label>
-				<textarea
-					id="message"
-					name="message"
-					bind:value={message}
-					rows="2"
-					placeholder="Ex : Mise à jour majeure du serveur en cours..."
-					style="
-						width: 100%; padding: 0.6rem 0.75rem;
-						background: #13131e; border: 1px solid #2a1f3d; border-radius: 0.5rem;
-						color: #e2e8f0; font-family:'Share Tech Mono',monospace; font-size: 0.85rem;
-						outline: none; resize: vertical; transition: border-color 0.2s;
-						box-sizing: border-box;
-					"
-					onfocus={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; }}
-					onblur={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#2a1f3d'; }}
-				></textarea>
-				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.67rem; color: #475569; margin-top: 0.35rem;">
-					{message.length} caractères · Sera affiché après "MAINTENANCE EN COURS —"
-				</p>
-			</div>
-
-			<!-- Actions -->
-			<div style="display: flex; align-items: center; gap: 1rem; padding-top: 0.25rem;">
-				<button
-					type="submit"
-					style="
-						font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 900; letter-spacing: 0.1em;
-						padding: 0.6rem 1.75rem;
-						background: #7c3aed; color: white; border: 1px solid #9f67ff;
-						border-radius: 0.5rem; cursor: pointer;
-						box-shadow: 0 0 14px #7c3aed40;
-						transition: box-shadow 0.2s, transform 0.1s;
-					"
+			<!-- Save -->
+			<div style="display: flex; align-items: center; gap: 1rem;">
+				<button type="submit"
+					style="font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 900; letter-spacing: 0.1em; padding: 0.55rem 1.5rem; background: #7c3aed; color: white; border: 1px solid #9f67ff; border-radius: 0.5rem; cursor: pointer; box-shadow: 0 0 14px #7c3aed40; transition: box-shadow 0.2s;"
 					onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 28px #7c3aed80'; }}
 					onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = '0 0 14px #7c3aed40'; }}
-					onmousedown={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(0.97)'; }}
-					onmouseup={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
 				>ENREGISTRER</button>
-
 				{#if form?.success}
-					<span style="display:flex; align-items:center; gap:0.4rem; font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#22c55e;">
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-						Enregistré avec succès
+					<span style="display:flex; align-items:center; gap:0.4rem; font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:#22c55e;">
+						<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+						Enregistré
 					</span>
 				{/if}
 				{#if form?.error}
-					<span style="font-family:'Share Tech Mono',monospace; font-size:0.75rem; color:#ef4444;">{form.error}</span>
+					<span style="font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:#ef4444;">{form.error}</span>
 				{/if}
 			</div>
 		</form>
 	</div>
 
-	<!-- Preview -->
-	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
-		<div style="padding: 1rem 1.5rem; border-bottom: 1px solid #1e1530; background: #0a0a12;">
-			<h2 style="font-family:'Rajdhani',sans-serif; font-size: 1.05rem; font-weight: 700; color: #e2e8f0; letter-spacing: 0.06em; margin: 0 0 0.15rem;">
-				PRÉVISUALISATION EN DIRECT
-			</h2>
-			<p style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #475569; margin: 0;">
-				Aperçu instantané du bandeau tel qu'il apparaîtra en haut du site
-			</p>
-		</div>
-		<div style="padding: 1.25rem; background: #07070f;">
-			{#if enabled}
-				<div style="
-					position: relative; overflow: hidden;
-					height: 48px; border-radius: 0.5rem;
-					display: flex; align-items: center;
-					background: repeating-linear-gradient(135deg, #7f1d1d 0px, #7f1d1d 20px, #9b1c1c 20px, #9b1c1c 40px);
-					border: 1px solid #ef4444;
-					box-shadow: 0 0 20px rgba(239,68,68,0.4);
-				">
-					<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.28);"></div>
-					<div style="
-						position: relative; z-index: 1;
-						display: flex; align-items: center; gap: 0.65rem;
-						padding: 0 1rem; width: 100%;
-						font-family:'Share Tech Mono',monospace; font-size: 0.75rem;
-						color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-						overflow: hidden;
-					">
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="2.2" style="flex-shrink:0;">
-							<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
-						</svg>
-						<span style="font-weight:700; color:#fde68a; flex-shrink:0; letter-spacing:0.08em;">MAINTENANCE EN COURS</span>
-						<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-							— {message || '(message vide)'}
-						</span>
-						{#if endDate}
-							<span style="flex-shrink:0; color:#fed7aa; white-space:nowrap; font-size:0.68rem;">
-								Fin le {fmtDate(endDate)}
-							</span>
-							{#if countdown && countdown !== 'Expiré'}
-								<span style="background:rgba(0,0,0,0.5); padding:2px 8px; border-radius:4px; color:#fde68a; font-weight:700; flex-shrink:0;">{countdown}</span>
-							{/if}
-						{/if}
-					</div>
-				</div>
-			{:else}
-				<div style="
-					height: 48px; border-radius: 0.5rem;
-					display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-					border: 1px dashed #1e293b;
-					font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #334155;
-				">
-					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-					Bandeau inactif — activez la maintenance pour voir la prévisualisation
-				</div>
-			{/if}
-		</div>
-	</div>
-
-	<!-- Hint -->
-	<p style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #1f2937; text-align: center; margin-top: 2rem;">
-		Page accessible uniquement à l'administrateur · /admin
+	<p style="font-family:'Share Tech Mono',monospace; font-size: 0.6rem; color: #1f2937; text-align: center; margin-top: 1.5rem;">
+		/admin · accès restreint
 	</p>
 </div>

@@ -11,6 +11,22 @@ function getConfig(key: string, fallback = ''): string {
 	return row?.value ?? fallback;
 }
 
+export function recordDownload(): void {
+	const date = new Date().toISOString().slice(0, 10);
+	db.prepare(`
+		INSERT INTO download_stats (date, count) VALUES (?, 1)
+		ON CONFLICT(date) DO UPDATE SET count = count + 1
+	`).run(date);
+}
+
+export function recordLogin(username: string): void {
+	const now = Date.now();
+	const date = new Date().toISOString().slice(0, 10);
+	db.prepare('INSERT OR IGNORE INTO login_events (id, username, date, ts) VALUES (?, ?, ?, ?)').run(
+		`${date}-${username}-${now}`, username, date, now
+	);
+}
+
 export function setConfig(key: string, value: string): void {
 	db.prepare('INSERT OR REPLACE INTO site_config (key, value) VALUES (?, ?)').run(key, value);
 }

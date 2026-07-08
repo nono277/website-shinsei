@@ -10,6 +10,16 @@ db.exec(`
 		key   TEXT PRIMARY KEY,
 		value TEXT NOT NULL
 	);
+	CREATE TABLE IF NOT EXISTS download_stats (
+		date  TEXT PRIMARY KEY,
+		count INTEGER NOT NULL DEFAULT 0
+	);
+	CREATE TABLE IF NOT EXISTS login_events (
+		id       TEXT PRIMARY KEY,
+		username TEXT NOT NULL,
+		date     TEXT NOT NULL,
+		ts       INTEGER NOT NULL
+	);
 	CREATE TABLE IF NOT EXISTS sessions (
 		id             TEXT PRIMARY KEY,
 		minecraft_token TEXT NOT NULL,

@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET } from '$env/static/private';
 import { createSession, createPartialAuth } from '$lib/server/session';
+import { recordLogin } from '$lib/server/siteConfig';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
@@ -118,6 +119,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		}
 
 		console.log('[Auth] Minecraft profile:', mojangProfile);
+		recordLogin(mojangProfile.name);
 		const sessionId = createSession({
 			minecraftToken: '',
 			uuid:           mojangProfile.id,

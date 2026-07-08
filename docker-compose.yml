@@ -16,6 +16,8 @@ services:
       - DB_PATH=/data/votes.db
     volumes:
       - votes_data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # permet d'atteindre le daemon sur le host
 
 volumes:
   votes_data:
