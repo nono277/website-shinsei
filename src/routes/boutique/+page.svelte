@@ -41,7 +41,25 @@
 
 <svelte:head><title>Boutique — SHINSEI 新世</title></svelte:head>
 
-<div style="min-height:100vh;background:#0a0a0f;padding:5rem 1.5rem 4rem;">
+<style>
+	.grades-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
+	}
+	@media (min-width: 640px) {
+		.grades-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+	@media (min-width: 1024px) {
+		.grades-grid {
+			grid-template-columns: repeat(5, 1fr);
+		}
+	}
+</style>
+
+<div style="min-height:100vh;background:#0a0a0f;padding:5rem 1rem 4rem;">
 	<div style="max-width:80rem;margin:0 auto;">
 
 		<!-- En-tête -->
@@ -54,7 +72,7 @@
 		</div>
 
 		<!-- Grades en ligne -->
-		<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:5rem;overflow-x:auto;">
+		<div class="grades-grid" style="margin-bottom:5rem;">
 			{#each shopGrades as grade}
 				<GradeCard
 					id={grade.id} name={grade.name} price={grade.price}

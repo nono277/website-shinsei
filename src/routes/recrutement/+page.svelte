@@ -62,6 +62,25 @@
 	function blur(e: Event)   { (e.currentTarget as HTMLElement).style.borderColor = '#1e1530'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }
 </script>
 
+<style>
+	.form-grid-2 {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+	}
+	.form-grid-3 {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		gap: 1rem;
+	}
+	@media (max-width: 600px) {
+		.form-grid-2,
+		.form-grid-3 {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
+
 <svelte:head>
 	<title>Recrutement Staff — SHINSEI 新世</title>
 	<meta name="description" content="Rejoins l'équipe SHINSEI. Candidature ouverte pour Modérateur, Helper, Builder, Développeur, CM et Testeur." />
@@ -144,7 +163,7 @@
 				<div style={sectionStyle}>
 					<h2 style={sectionTitleStyle}>Informations personnelles</h2>
 
-					<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+					<div class="form-grid-2">
 						<div>
 							<label for="pseudo_mc" style={labelStyle}>Pseudo Minecraft *</label>
 							<input id="pseudo_mc" name="pseudo_mc" required bind:value={form.pseudo_mc} style={inputStyle} placeholder="Steve" onfocus={focus} onblur={blur} />
@@ -160,7 +179,7 @@
 						<input id="email" name="email" required type="email" bind:value={form.email} style={inputStyle} placeholder="ton@email.com" onfocus={focus} onblur={blur} />
 					</div>
 
-					<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;">
+					<div class="form-grid-3">
 						<div>
 							<label for="age" style={labelStyle}>Âge *</label>
 							<input id="age" name="age" required type="number" min="13" max="99" bind:value={form.age} style={inputStyle} placeholder="18" onfocus={focus} onblur={blur} />
@@ -185,7 +204,7 @@
 						<textarea id="exp_staff" name="exp_staff" bind:value={form.exp_staff} rows="3" style="{inputStyle} resize:vertical;" placeholder="Ex : Modérateur sur ServeurXYZ pendant 6 mois..." onfocus={focus} onblur={blur}></textarea>
 					</div>
 
-					<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:end;">
+					<div class="form-grid-2" style="align-items:end;">
 						<div>
 							<label for="anciennete_mc" style={labelStyle}>Depuis combien de temps joues-tu à Minecraft ? *</label>
 							<input id="anciennete_mc" name="anciennete_mc" required bind:value={form.anciennete_mc} style={inputStyle} placeholder="5 ans" onfocus={focus} onblur={blur} />

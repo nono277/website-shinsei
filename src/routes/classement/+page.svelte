@@ -107,7 +107,7 @@
 									display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
 									background: {isPodiumMe ? '#7c3aed18' : '#0f0f1a'}; border: 1px solid {isPodiumMe ? '#7c3aed80' : PODIUM_COLORS[pos] + '40'};
 									border-radius: 0.75rem; padding: {isFirst ? '1.75rem 1.75rem' : '1.25rem 1.5rem'};
-									min-width: 150px;
+									min-width: 120px; max-width: 160px; flex: 1;
 									box-shadow: 0 0 24px {PODIUM_GLOW[pos]};
 									transform: translateY({isFirst ? '0' : '12px'});
 								">
@@ -136,8 +136,9 @@
 				<!-- Liste : rang 4+ si podium affiché, sinon tous les joueurs -->
 				{@const tableStart = voteEntries.length >= 3 ? 3 : 0}
 				{#if voteEntries.slice(tableStart).length > 0}
+					<div style="overflow-x: auto;">
 					<div style="background: #0a0a14; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
-						<table style="width: 100%; border-collapse: collapse;">
+						<table style="width: 100%; border-collapse: collapse; min-width: 320px;">
 							<thead>
 								<tr style="border-bottom: 1px solid #1e1530;">
 									<th style="padding: 0.75rem 1rem; text-align: left; font-family:'Rajdhani',sans-serif; font-size: 0.7rem; font-weight: 700; color: #475569; letter-spacing: 0.1em; width: 48px;">#</th>
@@ -176,6 +177,7 @@
 							</tbody>
 						</table>
 					</div>
+					</div>
 				{/if}
 			{/if}
 
@@ -204,7 +206,7 @@
 							display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
 							background: {isPodiumMe ? '#7c3aed18' : '#0f0f1a'}; border: 1px solid {isPodiumMe ? '#7c3aed80' : PODIUM_COLORS[pos] + '40'};
 							border-radius: 0.75rem; padding: {isFirst ? '1.75rem 1.75rem' : '1.25rem 1.5rem'};
-							min-width: 150px;
+							min-width: 120px; max-width: 160px; flex: 1;
 							box-shadow: 0 0 24px {PODIUM_GLOW[pos]};
 							transform: translateY({isFirst ? '0' : '12px'});
 						">
@@ -263,8 +265,9 @@
 			{/if}
 
 			<!-- Tableau rang 4+ -->
+			<div style="overflow-x: auto;">
 			<div style="background: #0a0a14; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden;">
-				<table style="width: 100%; border-collapse: collapse;">
+				<table style="width: 100%; border-collapse: collapse; min-width: 420px;">
 					<thead>
 						<tr style="border-bottom: 1px solid #1e1530;">
 							<th style="padding: 0.75rem 1rem; text-align: left; font-family:'Rajdhani',sans-serif; font-size: 0.7rem; font-weight: 700; color: #475569; letter-spacing: 0.1em; width: 48px;">#</th>
@@ -325,6 +328,7 @@
 						{/each}
 					</tbody>
 				</table>
+			</div>
 			</div>
 		{/if}
 

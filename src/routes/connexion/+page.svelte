@@ -19,13 +19,14 @@
 <svelte:head><title>Connexion — SHINSEI 新世</title></svelte:head>
 
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;">
-	<div style="max-width:440px;width:100%;position:relative;">
+	<div style="max-width:440px;width:100%;position:relative;" class="connexion-card-wrap">
 
 		<div style="position:absolute;inset:-40px;background:radial-gradient(ellipse at 50% 30%,#7c3aed18,transparent 65%);pointer-events:none;"></div>
 
 		<div
 			in:fly={{ y: 24, duration: 400 }}
 			style="position:relative;background:#0d0d15;border:1px solid #1e1530;border-radius:1.25rem;padding:3rem 2rem;box-shadow:0 0 80px #7c3aed12;display:flex;flex-direction:column;align-items:center;gap:1.5rem;text-align:center;"
+			class="connexion-card-inner"
 		>
 			<!-- Logo -->
 			<div style="display:flex;align-items:center;gap:0.5rem;">
@@ -95,3 +96,14 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	@media (max-width: 640px) {
+		.connexion-card-wrap {
+			width: calc(100% - 2rem);
+		}
+		.connexion-card-inner {
+			padding: 2rem 1.25rem !important;
+		}
+	}
+</style>

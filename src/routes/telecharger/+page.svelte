@@ -140,11 +140,11 @@
 		<h2 style="font-family:'Rajdhani',sans-serif; font-size:clamp(1.8rem,4vw,2.5rem); font-weight:900; color:white; text-align:center; margin-bottom:3.5rem;">
 			3 ÉTAPES POUR JOUER
 		</h2>
-		<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:2.5rem;" class="grid-steps">
+		<div style="display:grid; gap:2.5rem;" class="grid-steps">
 			{#each steps as step, i}
 				<div style="display:flex; flex-direction:column; gap:1rem; position:relative;">
 					{#if i < 2}
-						<div style="position:absolute; top:1.4rem; left:calc(100% + 0.25rem); right:calc(-100% - 0.25rem); height:1px; background:linear-gradient(90deg,#7c3aed50,transparent); pointer-events:none;"></div>
+						<div class="step-connector" style="position:absolute; top:1.4rem; left:calc(100% + 0.25rem); right:calc(-100% - 0.25rem); height:1px; background:linear-gradient(90deg,#7c3aed50,transparent); pointer-events:none;"></div>
 					{/if}
 					<div style="
 						width:3rem; height:3rem; border-radius:0.625rem; flex-shrink:0;
@@ -166,7 +166,7 @@
 		<h2 style="font-family:'Rajdhani',sans-serif; font-size:clamp(1.8rem,4vw,2.5rem); font-weight:900; color:white; text-align:center; margin-bottom:2.5rem;">
 			CONFIGURATION REQUISE
 		</h2>
-		<div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem;" class="grid-config">
+		<div style="display:grid; gap:1.25rem;" class="grid-config">
 			{#each [
 				{ label:'MINIMUM',     border:'#1e1530',   rows:[['Système','Windows 10 / 11 (64-bit)'],['Java','Java 17+ (inclus dans le launcher)'],['RAM','4 Go minimum'],['Stockage','2 Go d\'espace libre'],['Réseau','Connexion internet stable']] },
 				{ label:'RECOMMANDÉ',  border:'#7c3aed40', rows:[['Système','Windows 11 (64-bit)'],['Java','Java 21'],['RAM','8 Go allouée à Java'],['Stockage','SSD 5 Go libres'],['GPU','GTX 1060 / RX 580 ou supérieur']] },
@@ -265,8 +265,20 @@
 </section>
 
 <style>
-	@media (max-width: 640px) {
-		.grid-steps { grid-template-columns: 1fr !important; }
-		.grid-config { grid-template-columns: 1fr !important; }
+	/* Mobile-first: single column by default */
+	.grid-steps  { grid-template-columns: 1fr; }
+	.grid-config { grid-template-columns: 1fr; }
+
+	/* 3-step arrows only visible on wider screens */
+	@media (max-width: 767px) {
+		.step-connector { display: none; }
+	}
+
+	@media (min-width: 640px) {
+		.grid-config { grid-template-columns: 1fr 1fr; }
+	}
+
+	@media (min-width: 768px) {
+		.grid-steps { grid-template-columns: repeat(3, 1fr); }
 	}
 </style>

@@ -124,7 +124,7 @@
 
 <svelte:head><title>{user.username} — SHINSEI 新世</title></svelte:head>
 
-<div style="min-height:100vh; padding:2rem 1.5rem 4rem; max-width:72rem; margin:0 auto;">
+<div class="page-wrap" style="min-height:100vh; padding:2rem 1.5rem 4rem; max-width:72rem; margin:0 auto;">
 
 	<!-- Breadcrumb -->
 	<div in:fade={{ duration:300 }} style="display:flex; align-items:center; gap:0.75rem; margin-bottom:2rem;">
@@ -162,7 +162,7 @@
 			<div style="flex:1; display:flex; flex-direction:column; gap:1.25rem; justify-content:center;">
 
 				<!-- Head + username -->
-				<div style="display:flex; align-items:center; gap:1rem;">
+				<div class="profile-header-row" style="display:flex; align-items:center; gap:1rem;">
 					<div style="
 						width:80px; height:80px; border-radius:0.75rem; overflow:hidden; flex-shrink:0;
 						border:2px solid #7c3aed50; background:#13131e;
@@ -176,7 +176,7 @@
 						/>
 					</div>
 					<div>
-						<h1 style="font-family:'Rajdhani',sans-serif; font-size:2rem; font-weight:900; color:white; letter-spacing:0.04em; line-height:1.05;">
+						<h1 class="username-heading" style="font-family:'Rajdhani',sans-serif; font-size:2rem; font-weight:900; color:white; letter-spacing:0.04em; line-height:1.05;">
 							{user.username}
 						</h1>
 						<p style="font-family:'Share Tech Mono',monospace; font-size:0.7rem; color:#475569; letter-spacing:0.05em; margin-top:0.2rem;">
@@ -395,5 +395,8 @@
 	@media (max-width: 640px) {
 		.profile-grid, .skin-grid { grid-template-columns: 1fr; }
 		.stats-grid { grid-template-columns: repeat(3, 1fr) !important; }
+		.page-wrap { padding: 1rem 0.75rem 3rem !important; }
+		.username-heading { font-size: clamp(1.25rem, 5vw, 2rem) !important; }
+		.profile-header-row { flex-wrap: wrap; }
 	}
 </style>

@@ -143,7 +143,7 @@
 
 	<!-- Rift SVG animé -->
 	<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1;">
-		<svg width="560" height="560" viewBox="0 0 600 600" style="opacity:0.25;">
+		<svg width="560" height="560" viewBox="0 0 600 600" style="opacity:0.25;max-width:90vw;max-height:90vw;">
 			<ellipse cx="300" cy="300" rx="220" ry="280" fill="none" stroke="#7c3aed" stroke-width="1.2" opacity="0.6">
 				<animateTransform attributeName="transform" type="rotate" from="0 300 300" to="360 300 300" dur="22s" repeatCount="indefinite"/>
 			</ellipse>
@@ -232,7 +232,7 @@
 	border-top:1px solid #1e1530; border-bottom:1px solid #1e1530;
 	padding:4rem 1.5rem;
 ">
-	<div style="max-width:72rem;margin:0 auto;display:grid;grid-template-columns:repeat(1,1fr);gap:2rem;text-align:center;" class="sm:grid-cols-2 md:grid-cols-3">
+	<div class="stats-band-grid" style="max-width:72rem;margin:0 auto;display:grid;gap:2rem;text-align:center;">
 		{#each statValues as val, i}
 			{@const colors = ['#7c3aed','#06b6d4','#a78bfa','#f472b6']}
 			<div style="display:flex;flex-direction:column;gap:0.5rem;">
@@ -523,7 +523,7 @@
 			<p class="label-mono" style="color:#64748b;">Surveillez l'activité des failles dimensionnelles à travers le monde</p>
 		</div>
 
-		<div style="height:480px;border-radius:0.75rem;overflow:hidden;border:1px solid #1e1530;box-shadow:0 0 35px #7c3aed15;margin-bottom:1.5rem;">
+		<div class="worldmap-wrap" style="border-radius:0.75rem;overflow:hidden;border:1px solid #1e1530;box-shadow:0 0 35px #7c3aed15;margin-bottom:1.5rem;">
 			<WorldMap interactive={false} />
 		</div>
 
@@ -632,3 +632,27 @@
 		<p class="label-mono" style="color:#374151;">Minecraft 1.20.1 Forge · Java 17+ · Windows 10/11</p>
 	</div>
 </section>
+
+<style>
+	/* Stats band: 1 col mobile → 2 col sm → 3 col md */
+	.stats-band-grid {
+		grid-template-columns: 1fr;
+	}
+	@media (min-width: 640px) {
+		.stats-band-grid { grid-template-columns: repeat(2, 1fr); }
+	}
+	@media (min-width: 768px) {
+		.stats-band-grid { grid-template-columns: repeat(3, 1fr); }
+	}
+
+	/* WorldMap: responsive height */
+	.worldmap-wrap {
+		height: 300px;
+	}
+	@media (min-width: 640px) {
+		.worldmap-wrap { height: 400px; }
+	}
+	@media (min-width: 1024px) {
+		.worldmap-wrap { height: 480px; }
+	}
+</style>

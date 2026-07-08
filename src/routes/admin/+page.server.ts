@@ -29,11 +29,28 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	const since14 = now - 14 * 86400000;
 	const since30 = now - 30 * 86400000;
 
+	// Sessions valides (connectés dans les 30 derniers jours, session non expirée)
 	const activeSessions = (db.prepare('SELECT COUNT(*) as c FROM sessions WHERE expires_at > ?').get(now) as { c: number }).c;
-	const uniqueUsers    = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM sessions').get() as { c: number }).c;
+	// Total comptes uniques toutes sessions confondues (login_events = toutes connexions historiques)
+	const uniqueUsers    = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events').get() as { c: number }).c;
 	const totalDownloads = (db.prepare('SELECT COALESCE(SUM(count), 0) as c FROM download_stats').get() as { c: number }).c;
 	const totalVotes     = (db.prepare('SELECT COUNT(*) as c FROM vote_history').get() as { c: number }).c;
 	const totalLogins    = (db.prepare('SELECT COUNT(*) as c FROM login_events').get() as { c: number }).c;
+
+	// Actifs 7 derniers jours
+	const since7  = now - 7 * 86400000;
+	const active7 = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events WHERE ts > ?').get(since7) as { c: number }).c;
+
+	// Liste des sessions actives avec détail
+	const SESSION_TTL = 30 * 86_400_000;
+	const activeUsersList = db.prepare(`
+		SELECT username, uuid, skin_url, expires_at,
+		       (expires_at - ${SESSION_TTL}) as connected_at
+		FROM sessions
+		WHERE expires_at > ?
+		ORDER BY expires_at DESC
+		LIMIT 100
+	`).all(now) as { username: string; uuid: string; skin_url: string | null; expires_at: number; connected_at: number }[];
 
 	const rawLogins = db.prepare(`
 		SELECT date, COUNT(*) as count FROM login_events WHERE ts > ? GROUP BY date ORDER BY date ASC
@@ -64,10 +81,11 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	return {
 		adminUser: locals.user.username,
 		maintenance: getMaintenanceConfig(),
-		stats: { activeSessions, uniqueUsers, totalDownloads, totalVotes, totalLogins },
+		stats: { activeSessions, uniqueUsers, totalDownloads, totalVotes, totalLogins, active7 },
 		server: { online: serverOnline, players: serverPlayers, donjons: serverDonjons, failles: serverFailles },
 		dailyLogins,
 		topVoters,
+		activeUsersList,
 	};
 };
 

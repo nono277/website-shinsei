@@ -179,7 +179,7 @@
 					margin-bottom:2rem;
 					background:linear-gradient(to bottom,#0d0d1580,transparent);
 					display:flex;justify-content:center;
-				">
+				" class="wiki-header-pad">
 					<div style="display:flex;align-items:flex-end;gap:1rem;padding-bottom:1.25rem;max-width:52rem;margin:0 auto;">
 						<span style="font-size:2.5rem;line-height:1;">{currentSection.icon}</span>
 						<div>
@@ -189,7 +189,7 @@
 					</div>
 				</div>
 
-				<div style="padding:0 2rem 3rem;max-width:52rem;margin:0 auto;">
+				<div style="padding:0 2rem 3rem;max-width:52rem;margin:0 auto;" class="wiki-content-pad">
 
 				<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 				     LORE
@@ -342,7 +342,7 @@
 						margin-bottom:2rem;
 						padding:1.25rem;
 						background:#0d0d15;border:1px solid #1e1530;border-radius:0.75rem;
-					">
+					" class="rank-showcase-grid">
 						{#each rankShowcase as r, i}
 							<div style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;" in:fly={{ y:10, delay:i*50, duration:200 }}>
 								{#if r.icon}
@@ -501,7 +501,7 @@
 					</div>
 
 					<!-- Déblocage -->
-					<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:2rem;">
+					<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:2rem;" class="guildes-unlock-grid">
 						{#each [
 							{ label:'Rejoindre une guilde', req:'Grade Éveillé · sur invitation', color:'#3b82f6' },
 							{ label:'Créer une guilde',     req:'Grade Éveillé + 1 000 éclats', color:'#f59e0b' },
@@ -533,7 +533,7 @@
 					<div style="margin-bottom:2rem;padding:1.25rem;background:#0d0d15;border:1px solid #1e1530;border-radius:0.75rem;">
 						<h3 style="font-family:'Rajdhani',sans-serif;font-weight:900;font-size:1.1rem;color:#06b6d4;margin-bottom:0.35rem;">NIVEAUX & TERRITOIRE</h3>
 						<p style="font-size:0.78rem;color:#64748b;line-height:1.5;margin-bottom:0.9rem;">La guilde gagne de l'XP en tuant des mobs à plusieurs (coéquipier à moins de 50 blocs) et monte du niveau 1 au niveau 7 — chaque palier augmente le nombre de membres et de chunks claimables.</p>
-						<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;">
+						<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1rem;" class="guildes-chunks-grid">
 							{#each guildChunkLimits as cl}
 								<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;background:#06b6d408;border:1px solid #06b6d420;border-radius:0.375rem;">
 									<span style="font-size:0.8rem;color:#94a3b8;">{cl.rank}</span>
@@ -862,3 +862,32 @@
 		{/key}
 	</div>
 </div>
+
+<style>
+	/* Rank showcase: 7 cols on desktop → 4 cols on small screens */
+	@media (max-width: 480px) {
+		.rank-showcase-grid {
+			grid-template-columns: repeat(4, 1fr) !important;
+		}
+	}
+
+	/* Guildes: déblocage & chunks grids → 1 col on mobile */
+	@media (max-width: 540px) {
+		.guildes-unlock-grid,
+		.guildes-chunks-grid {
+			grid-template-columns: 1fr !important;
+		}
+	}
+
+	/* Content padding: tighter on small screens */
+	@media (max-width: 640px) {
+		.wiki-content-pad {
+			padding-left: 1rem !important;
+			padding-right: 1rem !important;
+		}
+		.wiki-header-pad {
+			padding-left: 1rem !important;
+			padding-right: 1rem !important;
+		}
+	}
+</style>

@@ -8,7 +8,6 @@
       "Bash(git checkout *)",
       "Bash(pnpm run *)",
       "Bash(npx svelte-check *)",
-<<<<<<< HEAD
       "Bash(Get-ChildItem -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(node *)",
@@ -17,8 +16,7 @@
       "Bash(curl -s \"https://api.top-serveurs.net/v1/votes/check?token=EIN76KAEIFKAYQ&pseudo=testuser\")",
       "Bash(curl -s \"https://api.top-serveurs.net/v1/votes/check?token=EIN76KAEIFKAYQ&pseudo=testuser&server_token=EIN76KAEIFKAYQ\")",
       "Bash(curl -s \"https://api.top-serveurs.net/v1/servers?token=EIN76KAEIFKAYQ\")",
-      "Bash(curl *)"
-=======
+      "Bash(curl *)",
       "PowerShell(npm run *)",
       "PowerShell($mvn = \\(Get-Command mvn -ErrorAction SilentlyContinue\\); if \\($mvn\\) { \"mvn: $\\($mvn.Source\\)\" } else { \"mvn NOT found\" }; $jc = \\(Get-Command javac -ErrorAction SilentlyContinue\\); if \\($jc\\) { javac -version 2>&1 } else { \"javac NOT found\" })",
       "Bash(python -c \"import yaml,sys; d=yaml.safe_load\\(open\\('groups.yml',encoding='utf-8'\\)\\); g=d['groups']; print\\('OK — groupes:', len\\(g\\)\\); import json; [print\\(' ', k, '| parents:', v.get\\('parents'\\), '| perms:', len\\(v.get\\('permissions',[]\\)\\)\\) for k,v in g.items\\(\\)]\")",
@@ -40,7 +38,6 @@
       "Bash(cmd.exe //c \"gradlew.bat build --console=plain --no-daemon\")",
       "Bash(sh gradlew build --console=plain --no-daemon)",
       "Bash(grep -nE \"SERVER_IP|playshinsei|25565|:[0-9]{4,5}\" \"/z/documents/shinsei/shinsei-launcher/apps/launcher/resources/shinsei-mod/ShinseiMenuMod.java\")"
->>>>>>> 27c541adc839af1c2cf96e629c8ba307c5a2db52
     ]
   }
 }

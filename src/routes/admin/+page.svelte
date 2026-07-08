@@ -15,6 +15,17 @@
 		return n >= 1000 ? (n / 1000).toFixed(1).replace('.', ',') + 'k' : String(n);
 	}
 
+	function timeAgo(ts: number): string {
+		const diff = Date.now() - ts;
+		const days  = Math.floor(diff / 86_400_000);
+		const hours = Math.floor(diff / 3_600_000);
+		const mins  = Math.floor(diff / 60_000);
+		if (days  > 0) return `il y a ${days}j`;
+		if (hours > 0) return `il y a ${hours}h`;
+		if (mins  > 0) return `il y a ${mins}min`;
+		return 'à l\'instant';
+	}
+
 	const maxLogins = $derived(Math.max(...data.dailyLogins.map(d => d.count), 1));
 	const maxVotes  = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
 
@@ -194,7 +205,7 @@
 	</div>
 
 	<!-- Server details + Top voters -->
-	<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;" class="sm:grid-cols-2">
+	<div class="two-col-grid" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
 
 		<!-- Server details -->
 		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
@@ -462,7 +473,7 @@
 
 		{#if stopEnabled}
 		<!-- Fin prévue + message -->
-		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+		<div class="stop-modal-grid" style="display: grid; gap: 0.75rem; margin-bottom: 0.75rem;">
 			<div>
 				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 0.45rem;">Fin prévue</p>
 				<div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.45rem;">
@@ -523,3 +534,24 @@
 	</div>
 </div>
 {/if}
+
+<style>
+	/* Server details + Top voters: 2-col on sm+, 1-col on mobile */
+	.two-col-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	/* Stop modal inner grid: 2-col on sm+, 1-col on mobile */
+	.stop-modal-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	@media (max-width: 640px) {
+		.two-col-grid {
+			grid-template-columns: 1fr;
+		}
+		.stop-modal-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

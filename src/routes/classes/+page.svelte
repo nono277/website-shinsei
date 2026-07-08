@@ -74,7 +74,7 @@
 				<!-- Top accent bar -->
 				<div style="height: 3px; background: linear-gradient(90deg, {cls.color}, transparent);"></div>
 
-				<div style="padding: 2rem;">
+				<div class="panel-inner">
 
 					<!-- Class identity -->
 					<div style="display: flex; align-items: flex-start; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
@@ -214,7 +214,7 @@
 										text-transform: uppercase;
 									">{champion.gradeGameplay}</span>
 								</div>
-								<div style="margin-left: auto; text-align: right;">
+								<div class="champion-xp">
 									<p style="font-family:'Share Tech Mono',monospace; font-size: 1.05rem; color: {cls.color}; font-weight: 700; margin: 0;">
 										{champion.xpTotal.toLocaleString()} XP
 									</p>
@@ -305,6 +305,25 @@
 	@media (min-width: 768px) {
 		.classes-grid {
 			grid-template-columns: 1fr 1fr;
+		}
+	}
+
+	/* Panel inner padding: smaller on mobile */
+	.panel-inner {
+		padding: 1.25rem;
+	}
+	@media (min-width: 640px) {
+		.panel-inner { padding: 2rem; }
+	}
+
+	/* Champion XP block: stack on mobile, push right on larger screens */
+	.champion-xp {
+		text-align: left;
+	}
+	@media (min-width: 640px) {
+		.champion-xp {
+			margin-left: auto;
+			text-align: right;
 		}
 	}
 </style>

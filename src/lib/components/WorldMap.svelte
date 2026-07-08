@@ -258,7 +258,7 @@
 				position: absolute;
 				top: 0; right: 0;
 				height: 100%;
-				width: 300px;
+				width: min(300px, 85vw);
 				background: rgba(10,10,15,0.97);
 				border-left: 1px solid {selectedMarker.type==='rift' ? '#ef444440' : '#22c55e40'};
 				backdrop-filter: blur(12px);
