@@ -2,14 +2,106 @@
 	import '../app.css';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import Particles from '$lib/components/Particles.svelte';
+	import type { LayoutData } from './$types';
 
-	let { children } = $props();
+	let { children, data }: { children: any; data: LayoutData } = $props();
+
+	const BANNER_H = 48;
+
+	let countdown = $state('');
+
+	$effect(() => {
+		const end = data.maintenance?.endDate;
+		if (!end) { countdown = ''; return; }
+		const update = () => {
+			const diff = new Date(end).getTime() - Date.now();
+			if (diff <= 0) { countdown = ''; return; }
+			const h = Math.floor(diff / 3600000);
+			const m = Math.floor((diff % 3600000) / 60000);
+			const s = Math.floor((diff % 60000) / 1000);
+			countdown = `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+		};
+		update();
+		const t = setInterval(update, 1000);
+		return () => clearInterval(t);
+	});
+
+	const bannerActive = $derived(data.maintenance?.enabled ?? false);
+	const mainTop = $derived(bannerActive ? `${60 + BANNER_H}px` : '60px');
 </script>
 
 <svelte:head>
 	<title>SHINSEI 新世 — Serveur Minecraft RPG</title>
 	<meta name="description" content="SHINSEI 新世 — Serveur Minecraft RPG post-apocalyptique. Éveillez vos pouvoirs, fermez les failles." />
 </svelte:head>
+
+{#if bannerActive}
+<div
+	aria-live="polite"
+	role="status"
+	style="
+		position: fixed;
+		top: 0; left: 0; right: 0;
+		z-index: 200;
+		height: {BANNER_H}px;
+		display: flex;
+		align-items: center;
+		overflow: hidden;
+		background: repeating-linear-gradient(
+			135deg,
+			#7f1d1d 0px, #7f1d1d 20px,
+			#9b1c1c 20px, #9b1c1c 40px
+		);
+		border-bottom: 2px solid #ef4444;
+		box-shadow: 0 0 30px rgba(239,68,68,0.55), 0 2px 8px rgba(0,0,0,0.6);
+		animation: maintenance-glow 2.4s ease-in-out infinite;
+	"
+>
+	<!-- darkening overlay for readability -->
+	<div style="position: absolute; inset: 0; background: rgba(0,0,0,0.28);"></div>
+
+	<div style="
+		position: relative; z-index: 1;
+		display: flex; align-items: center; gap: 0.65rem;
+		padding: 0 1.25rem;
+		width: 100%; max-width: 76rem; margin: 0 auto;
+		font-family: 'Share Tech Mono', monospace;
+		font-size: 0.78rem;
+		color: #fff;
+		text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+		overflow: hidden;
+	">
+		<!-- icon -->
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fde68a" stroke-width="2.2" style="flex-shrink:0;">
+			<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+		</svg>
+
+		<span style="font-weight:700; color:#fde68a; flex-shrink:0; letter-spacing:0.08em; font-size:0.82rem;">
+			MAINTENANCE EN COURS
+		</span>
+
+		<span style="color:#fca5a5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+			— {data.maintenance.message}
+		</span>
+
+		{#if data.maintenance.endDate}
+			<span style="flex-shrink:0; color:#fed7aa; white-space:nowrap; font-size:0.72rem;" class="hidden sm:inline">
+				Fin le {new Date(data.maintenance.endDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à {new Date(data.maintenance.endDate).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+			</span>
+			{#if countdown}
+				<span style="
+					flex-shrink:0; background:rgba(0,0,0,0.5);
+					padding:2px 10px; border-radius:4px;
+					color:#fde68a; font-weight:700; font-size:0.8rem;
+					letter-spacing:0.06em; border:1px solid rgba(239,68,68,0.4);
+				">
+					{countdown}
+				</span>
+			{/if}
+		{/if}
+	</div>
+</div>
+{/if}
 
 <Particles />
 
@@ -40,9 +132,9 @@
 
 <!-- Wrapper content -->
 <div style="position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; background-color: #0a0a0f;">
-	<Navbar />
+	<Navbar topOffset={bannerActive ? BANNER_H : 0} />
 
-	<main style="flex: 1; padding-top: 60px;">
+	<main style="flex: 1; padding-top: {mainTop};">
 		{@render children()}
 	</main>
 
@@ -129,3 +221,10 @@
 		</div>
 	</footer>
 </div>
+
+<style>
+	@keyframes maintenance-glow {
+		0%, 100% { box-shadow: 0 0 30px rgba(239,68,68,0.55), 0 2px 8px rgba(0,0,0,0.6); }
+		50%       { box-shadow: 0 0 50px rgba(239,68,68,0.85), 0 2px 8px rgba(0,0,0,0.6), 0 0 80px rgba(239,68,68,0.3); }
+	}
+</style>

@@ -1,4 +1,5 @@
 import type { LayoutServerLoad } from './$types';
+import { getMaintenanceConfig } from '$lib/server/siteConfig';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	return {
@@ -11,5 +12,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 					skinVariant: locals.user.skinVariant,
 				}
 			: null,
+		maintenance: getMaintenanceConfig(),
 	};
 };

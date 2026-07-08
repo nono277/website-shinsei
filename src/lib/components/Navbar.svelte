@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import iconbar from '$lib/img/icon/iconbar.png';
 
+	let { topOffset = 0 }: { topOffset?: number } = $props();
 	let scrolled = $state(false);
 	let menuOpen = $state(false);
 
@@ -36,7 +37,7 @@
 <!-- Nav principale -->
 <nav style="
 	position: fixed;
-	top: 0; left: 0; right: 0;
+	top: {topOffset}px; left: 0; right: 0;
 	z-index: 50;
 	height: 60px;
 	display: flex;
@@ -178,7 +179,7 @@
 {#if menuOpen}
 	<div
 		transition:fly={{ y: -10, duration: 180 }}
-		style="position: fixed; top: 60px; left: 0; right: 0; z-index: 40; background: #0d0d15; border-bottom: 1px solid #1e1530;"
+		style="position: fixed; top: {60 + topOffset}px; left: 0; right: 0; z-index: 40; background: #0d0d15; border-bottom: 1px solid #1e1530;"
 	>
 		{#each links as link}
 			<a

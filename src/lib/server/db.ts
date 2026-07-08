@@ -6,6 +6,10 @@ db.pragma('journal_mode = WAL');
 db.pragma('synchronous = NORMAL');
 
 db.exec(`
+	CREATE TABLE IF NOT EXISTS site_config (
+		key   TEXT PRIMARY KEY,
+		value TEXT NOT NULL
+	);
 	CREATE TABLE IF NOT EXISTS sessions (
 		id             TEXT PRIMARY KEY,
 		minecraft_token TEXT NOT NULL,
