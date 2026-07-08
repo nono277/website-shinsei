@@ -282,16 +282,32 @@
 					">DÉCONNEXION</button>
 				</form>
 			{:else}
-				<a href="https://discord.gg/DcN95Dbx4" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false} style="
-					display: flex; align-items: center; justify-content: center; gap: 0.6rem;
-					width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 900; letter-spacing: 0.08em;
-					padding: 0.65rem 0; background: #5865f220; color: #a5b4fc;
-					border-radius: 0.375rem; text-decoration: none;
-					border: 1px solid #5865f240;
-				">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="#a5b4fc"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
-					REJOINDRE LE DISCORD
-				</a>
+				<div style="display: flex; flex-direction: column; gap: 0.5rem;">
+					<a href="/connexion" onclick={() => menuOpen = false} style="
+						display: flex; align-items: center; justify-content: center;
+						width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 700; letter-spacing: 0.06em;
+						padding: 0.65rem 0; background: transparent; color: #94a3b8;
+						border-radius: 0.375rem; text-decoration: none;
+						border: 1px solid #374151;
+					">CONNEXION</a>
+					<a href="/telecharger" onclick={() => menuOpen = false} style="
+						display: flex; align-items: center; justify-content: center;
+						width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.875rem; font-weight: 900; letter-spacing: 0.08em;
+						padding: 0.65rem 0; background: #7c3aed; color: white;
+						border-radius: 0.375rem; text-decoration: none;
+						border: 1px solid #9f67ff; box-shadow: 0 0 14px #7c3aed40;
+					">JOUER</a>
+					<a href="https://discord.gg/DcN95Dbx4" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false} style="
+						display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+						width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em;
+						padding: 0.55rem 0; background: #5865f210; color: #a5b4fc;
+						border-radius: 0.375rem; text-decoration: none;
+						border: 1px solid #5865f230;
+					">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="#a5b4fc"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>
+						DISCORD
+					</a>
+				</div>
 			{/if}
 		</div>
 	</div>

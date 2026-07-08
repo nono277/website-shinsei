@@ -32,8 +32,8 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 
 	// Sessions valides (connectés dans les 30 derniers jours, session non expirée) — hors admin
 	const activeSessions = (db.prepare('SELECT COUNT(*) as c FROM sessions WHERE expires_at > ? AND username != ?').get(now, admin) as { c: number }).c;
-	// Total comptes uniques toutes sessions confondues — hors admin
-	const uniqueUsers    = (db.prepare('SELECT COUNT(DISTINCT username) as c FROM login_events WHERE username != ?').get(admin) as { c: number }).c;
+	// Total comptes uniques par UUID (résistant aux changements de pseudo) — hors admin
+	const uniqueUsers    = (db.prepare('SELECT COUNT(DISTINCT uuid) as c FROM sessions WHERE username != ?').get(admin) as { c: number }).c;
 	const totalDownloads = (db.prepare('SELECT COALESCE(SUM(count), 0) as c FROM download_stats').get() as { c: number }).c;
 	const totalVotes     = (db.prepare('SELECT COUNT(*) as c FROM vote_history').get() as { c: number }).c;
 	const totalLogins    = (db.prepare('SELECT COUNT(*) as c FROM login_events WHERE username != ?').get(admin) as { c: number }).c;
@@ -68,6 +68,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	let serverPlayers = 0;
 	let serverDonjons = 0;
 	let serverFailles = 0;
+	let onlinePlayers: { username: string; uuid: string; grade: string }[] = [];
 	try {
 		const res = await fetch('/api/stats');
 		if (res.ok) {
@@ -76,6 +77,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 			serverPlayers = data.online ?? 0;
 			serverDonjons = data.donjons ?? 0;
 			serverFailles = data.failles ?? 0;
+			onlinePlayers = (data.players ?? []) as { username: string; uuid: string; grade: string }[];
 		}
 	} catch { /* serveur offline */ }
 
@@ -94,15 +96,71 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	`).all(cutoffDate) as { date: string; count: number }[];
 	const dailyServerPeaks = fillDays(rawServerPeaks, 14);
 
+	// Téléchargements launcher - 14 jours
+	const rawDownloads = db.prepare(`
+		SELECT date, count FROM download_stats WHERE date >= ? ORDER BY date ASC
+	`).all(cutoffDate) as { date: string; count: number }[];
+	const dailyDownloads = fillDays(rawDownloads, 14);
+
+	// Votes par site - 30 jours
+	const votesBySite = db.prepare(`
+		SELECT site, COUNT(*) as count FROM vote_history
+		WHERE voted_at > ? GROUP BY site ORDER BY count DESC
+	`).all(since30) as { site: string; count: number }[];
+
+	// Dernières connexions au site
+	const recentLogins = db.prepare(`
+		SELECT username, ts FROM login_events WHERE username != ? ORDER BY ts DESC LIMIT 15
+	`).all(admin) as { username: string; ts: number }[];
+
+	// Nouveaux joueurs cette semaine vs semaine précédente
+	const weekStart     = now - 7  * 86400000;
+	const prevWeekStart = now - 14 * 86400000;
+	const newThisWeek = (db.prepare(`
+		SELECT COUNT(*) as c FROM (
+			SELECT username, MIN(ts) as first_login FROM login_events WHERE username != ?
+			GROUP BY username HAVING first_login >= ?
+		)
+	`).get(admin, weekStart) as { c: number }).c;
+	const newLastWeek = (db.prepare(`
+		SELECT COUNT(*) as c FROM (
+			SELECT username, MIN(ts) as first_login FROM login_events WHERE username != ?
+			GROUP BY username HAVING first_login >= ? AND first_login < ?
+		)
+	`).get(admin, prevWeekStart, weekStart) as { c: number }).c;
+
+	// Activité par heure - 30 jours
+	const rawHourly = db.prepare(`
+		SELECT CAST(strftime('%H', datetime(ts/1000, 'unixepoch', 'localtime')) AS INTEGER) as hour,
+		       COUNT(*) as count
+		FROM login_events WHERE ts > ? AND username != ?
+		GROUP BY hour ORDER BY hour
+	`).all(since30, admin) as { hour: number; count: number }[];
+	const hourlyActivity = Array.from({ length: 24 }, (_, h) => ({
+		hour: h,
+		count: rawHourly.find(r => r.hour === h)?.count ?? 0,
+	}));
+
+	// Récompenses de vote en attente
+	const pendingRewardsList = db.prepare(`
+		SELECT username, kind FROM pending_rewards ORDER BY username ASC
+	`).all() as { username: string; kind: string }[];
+
 	return {
 		adminUser: locals.user.username,
 		maintenance: getMaintenanceConfig(),
-		stats: { activeSessions, uniqueUsers, totalDownloads, totalVotes, totalLogins, active7 },
+		stats: { activeSessions, uniqueUsers, totalDownloads, totalVotes, totalLogins, active7, newThisWeek, newLastWeek },
 		server: { online: serverOnline, players: serverPlayers, donjons: serverDonjons, failles: serverFailles },
 		dailyLogins,
 		dailyServerPeaks,
+		dailyDownloads,
 		topVoters,
+		votesBySite,
 		activeUsersList,
+		recentLogins,
+		pendingRewardsList,
+		hourlyActivity,
+		onlinePlayers,
 	};
 };
 

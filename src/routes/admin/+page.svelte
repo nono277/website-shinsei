@@ -28,7 +28,21 @@
 
 	const maxLogins      = $derived(Math.max(...data.dailyLogins.map(d => d.count), 1));
 	const maxServerPeaks = $derived(Math.max(...data.dailyServerPeaks.map(d => d.count), 1));
+	const maxDownloads   = $derived(Math.max(...data.dailyDownloads.map(d => d.count), 1));
+	const maxVotesBySite = $derived(Math.max(...data.votesBySite.map(v => v.count), 1));
+	const maxHourly      = $derived(Math.max(...data.hourlyActivity.map(h => h.count), 1));
 	const maxVotes       = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
+
+	function gradeColor(grade: string): string {
+		const g = (grade ?? '').toLowerCase();
+		if (g === 'abyssal')      return '#ef4444';
+		if (g === 'souverain')    return '#eab308';
+		if (g === 'transcendant') return '#a855f7';
+		if (g === 'fleau')        return '#f97316';
+		if (g === 'briseur')      return '#3b82f6';
+		if (g === 'eveille')      return '#22c55e';
+		return '#64748b';
+	}
 
 	// ── Console serveur ──────────────────────────────────────────────
 	let mcRunning     = $state(false);
@@ -147,7 +161,7 @@
 	<title>Panel Admin — SHINSEI</title>
 </svelte:head>
 
-<div style="min-height: 80vh; padding: 2rem 1.25rem; max-width: 64rem; margin: 0 auto;">
+<div class="admin-wrap">
 
 	<!-- Header -->
 	<div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
@@ -156,7 +170,7 @@
 				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.2">
 					<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
 				</svg>
-				<h1 style="font-family:'Rajdhani',sans-serif; font-size: 1.6rem; font-weight: 900; color: #7c3aed; text-shadow: 0 0 20px #7c3aed50; letter-spacing: 0.05em; margin: 0;">
+				<h1 class="admin-title">
 					PANEL ADMINISTRATEUR
 				</h1>
 			</div>
@@ -203,6 +217,23 @@
 				</div>
 			</div>
 		{/each}
+	</div>
+
+	<!-- Nouveaux joueurs cette semaine -->
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 0.75rem 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+		<div style="display: flex; align-items: center; gap: 0.6rem;">
+			<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2">
+				<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+				<line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+			</svg>
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #64748b;">Nouveaux joueurs cette semaine</span>
+		</div>
+		<div style="display: flex; align-items: center; gap: 1.5rem;">
+			<span style="font-family:'Rajdhani',sans-serif; font-size: 1.5rem; font-weight: 900; color: #06b6d4; line-height: 1;">{data.stats.newThisWeek}</span>
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: {data.stats.newThisWeek >= data.stats.newLastWeek ? '#22c55e' : '#f87171'};">
+				{data.stats.newThisWeek >= data.stats.newLastWeek ? '↑' : '↓'} {Math.abs(data.stats.newThisWeek - data.stats.newLastWeek)} vs sem. précédente ({data.stats.newLastWeek})
+			</span>
+		</div>
 	</div>
 
 	<!-- Server details + Top voters -->
@@ -257,6 +288,30 @@
 		</div>
 	</div>
 
+	<!-- Joueurs MC en ligne -->
+	{#if data.server.online && data.onlinePlayers.length > 0}
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+		<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Joueurs en ligne sur le serveur</p>
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">{data.onlinePlayers.length} joueur{data.onlinePlayers.length !== 1 ? 's' : ''}</span>
+		</div>
+		<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.4rem;">
+			{#each data.onlinePlayers as p}
+				<div style="display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.6rem; background: #0a0a12; border-radius: 0.4rem; border: 1px solid #1e153060;">
+					<img src="https://crafatar.com/avatars/{p.uuid}?size=22&overlay" alt={p.username} width="22" height="22"
+						style="border-radius: 3px; image-rendering: pixelated; flex-shrink: 0;"
+						onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
+					/>
+					<div style="min-width: 0;">
+						<div style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #e2e8f0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{p.username}</div>
+						<div style="font-family:'Share Tech Mono',monospace; font-size: 0.55rem; color: {gradeColor(p.grade)}; text-transform: capitalize;">{p.grade}</div>
+					</div>
+				</div>
+			{/each}
+		</div>
+	</div>
+	{/if}
+
 	<!-- Sessions actives (qui est connecté au site) -->
 	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
 		<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
@@ -288,6 +343,59 @@
 				{/each}
 			</div>
 		{/if}
+	</div>
+
+	<!-- Dernières connexions + Récompenses en attente -->
+	<div class="two-col-grid" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+
+		<!-- Dernières connexions -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 0.75rem;">Dernières connexions</p>
+			{#if data.recentLogins.length === 0}
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #374151;">Aucune connexion enregistrée</p>
+			{:else}
+				<div style="display: flex; flex-direction: column; gap: 0.3rem;">
+					{#each data.recentLogins as login}
+						<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.5rem; background: #0a0a12; border-radius: 0.35rem; border: 1px solid #1e153050;">
+							<span style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">{login.username}</span>
+							<span style="font-family:'Share Tech Mono',monospace; font-size: 0.58rem; color: #475569;">{new Date(login.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<!-- Récompenses de vote en attente -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Récompenses en attente</p>
+				{#if data.pendingRewardsList.length > 0}
+					<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 9999px; background: #1c0a09; border: 1px solid #ef444430; color: #f87171;">
+						{data.pendingRewardsList.length}
+					</span>
+				{/if}
+			</div>
+			{#if data.pendingRewardsList.length === 0}
+				<div style="display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.75rem; background: #051a0e; border-radius: 0.4rem; font-family:'Share Tech Mono',monospace; font-size: 0.7rem; color: #4ade80;">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+					Toutes les récompenses ont été distribuées
+				</div>
+			{:else}
+				<div style="display: flex; flex-direction: column; gap: 0.3rem; max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #1e1530 transparent;">
+					{#each data.pendingRewardsList as r}
+						<div style="display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.5rem; background: #0a0a12; border-radius: 0.35rem; border: 1px solid #1e153050;">
+							<span style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #e2e8f0;">{r.username}</span>
+							<span style="font-family:'Share Tech Mono',monospace; font-size: 0.6rem; padding: 0.1rem 0.4rem; border-radius: 9999px;
+								background: {r.kind === 'vote' ? '#052e16' : '#150d2e'};
+								border: 1px solid {r.kind === 'vote' ? '#16a34a40' : '#7c3aed40'};
+								color: {r.kind === 'vote' ? '#4ade80' : '#a78bfa'};">
+								{r.kind}
+							</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<!-- Charts: connexions site + joueurs serveur -->
@@ -351,6 +459,86 @@
 
 	</div>
 
+	<!-- Téléchargements + Votes par site -->
+	<div class="charts-grid" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+
+		<!-- Téléchargements launcher -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Téléchargements launcher</p>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">14 derniers jours</span>
+			</div>
+			<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px;">
+				{#each data.dailyDownloads as day}
+					{@const pct = Math.round((day.count / maxDownloads) * 100)}
+					<div
+						style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
+						background: {day.count > 0 ? 'linear-gradient(to top, #b45309, #fbbf24)' : '#1e1530'};
+						border-radius: 2px 2px 0 0; transition: height 0.3s;"
+						title="{day.count} téléchargement{day.count !== 1 ? 's' : ''} · {day.date}"
+					></div>
+				{/each}
+			</div>
+			<div style="display: flex; gap: 3px; margin-top: 5px;">
+				{#each data.dailyDownloads as day, i}
+					<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{day.label}</div>
+				{/each}
+			</div>
+		</div>
+
+		<!-- Votes par site -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Votes par site</p>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">30 derniers jours</span>
+			</div>
+			{#if data.votesBySite.length === 0}
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #374151;">Aucun vote ce mois</p>
+			{:else}
+				<div style="display: flex; flex-direction: column; gap: 0.6rem; padding-top: 0.25rem;">
+					{#each data.votesBySite as site}
+						<div>
+							<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem;">
+								<span style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 70%;">{site.site}</span>
+								<span style="font-family:'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 700; color: #22c55e; flex-shrink: 0;">{site.count}</span>
+							</div>
+							<div style="height: 5px; background: #1e1530; border-radius: 9999px; overflow: hidden;">
+								<div style="height: 100%; width: {Math.round((site.count / maxVotesBySite) * 100)}%; background: linear-gradient(to right, #16a34a, #4ade80); border-radius: 9999px;"></div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+	</div>
+
+	<!-- Heatmap activité par heure -->
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+		<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Activité par heure</p>
+			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">connexions site · 30 jours</span>
+		</div>
+		<div style="display: flex; align-items: flex-end; gap: 2px; height: 60px;">
+			{#each data.hourlyActivity as h}
+				{@const pct = Math.round((h.count / maxHourly) * 100)}
+				<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;">
+					<div
+						style="width: 100%; height: {Math.max(pct, h.count > 0 ? 4 : 0)}%; min-height: {h.count > 0 ? '3px' : '2px'};
+						background: {h.count > 0 ? `rgba(124,58,237,${0.2 + (pct / 100) * 0.8})` : '#1e1530'};
+						border-radius: 2px 2px 0 0; transition: height 0.3s; height: {Math.max(pct, h.count > 0 ? 5 : 2)}px; max-height: 60px;"
+						title="{h.count} connexion{h.count !== 1 ? 's' : ''} à {String(h.hour).padStart(2,'0')}h"
+					></div>
+				</div>
+			{/each}
+		</div>
+		<div style="display: flex; gap: 2px; margin-top: 5px;">
+			{#each data.hourlyActivity as h}
+				<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.45rem; color: {h.hour % 3 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{String(h.hour).padStart(2,'0')}</div>
+			{/each}
+		</div>
+	</div>
+
 	<!-- Console serveur Minecraft -->
 	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; overflow: hidden; margin-bottom: 1rem;">
 
@@ -366,7 +554,7 @@
 			</div>
 
 			<!-- Status + boutons -->
-			<div style="display: flex; align-items: center; gap: 0.75rem;">
+			<div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
 				<!-- Status pill -->
 				<div style="display: flex; align-items: center; gap: 0.45rem; font-family:'Share Tech Mono',monospace; font-size: 0.7rem; padding: 0.3rem 0.75rem; border-radius: 9999px; background: {mcRunning ? '#052e16' : '#1c0a09'}; border: 1px solid {mcRunning ? '#16a34a40' : '#ef444430'};">
 					<div style="width: 6px; height: 6px; border-radius: 50%; background: {mcRunning ? '#22c55e' : '#ef4444'}; box-shadow: 0 0 6px {mcRunning ? '#22c55e' : '#ef4444'};"></div>
@@ -601,6 +789,23 @@
 {/if}
 
 <style>
+	.admin-wrap {
+		min-height: 80vh;
+		padding: 2rem 1.25rem;
+		max-width: 64rem;
+		margin: 0 auto;
+	}
+
+	.admin-title {
+		font-family: 'Rajdhani', sans-serif;
+		font-size: 1.6rem;
+		font-weight: 900;
+		color: #7c3aed;
+		text-shadow: 0 0 20px #7c3aed50;
+		letter-spacing: 0.05em;
+		margin: 0;
+	}
+
 	/* Server details + Top voters: 2-col on sm+, 1-col on mobile */
 	.two-col-grid {
 		grid-template-columns: 1fr 1fr;
@@ -617,6 +822,12 @@
 	}
 
 	@media (max-width: 640px) {
+		.admin-wrap {
+			padding: 1rem 0.75rem;
+		}
+		.admin-title {
+			font-size: 1.1rem;
+		}
 		.two-col-grid {
 			grid-template-columns: 1fr;
 		}
