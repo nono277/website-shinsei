@@ -48,7 +48,7 @@ class Handler(BaseHTTPRequestHandler):
             if not is_running():
                 self.reply(200, {'ok': False, 'message': 'Serveur déjà arrêté'})
                 return
-            subprocess.run(['screen', '-S', SCREEN, '-p', '0', '-X', 'stuff', 'stop\r'])
+            subprocess.run(['screen', '-S', SCREEN, '-p', '0', '-X', 'stuff', '\x03'])
             self.reply(200, {'ok': True, 'message': 'Arrêt en cours...'})
 
         elif self.path == '/cmd':
