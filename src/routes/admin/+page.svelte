@@ -70,7 +70,6 @@
 			const d = await r.json();
 			cmdStatus = d.message ?? d.error ?? '';
 			cmdInput  = '';
-			setTimeout(fetchLogs, 600);
 		} catch {
 			cmdStatus = 'Erreur réseau';
 		} finally {
@@ -85,16 +84,8 @@
 		} catch { /* offline */ }
 	}
 
-	async function fetchLogs() {
-		try {
-			const r = await fetch('/api/admin/server?action=logs');
-			if (r.ok) {
-				const d = await r.json();
-				mcLogs = d.lines ?? [];
-				// auto-scroll
-				setTimeout(() => { if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight; }, 30);
-			}
-		} catch { /* offline */ }
+	function autoScroll() {
+		setTimeout(() => { if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight; }, 20);
 	}
 
 	async function serverAction(action: 'start' | 'stop', opts: { duration?: number; message?: string } = {}) {
@@ -128,10 +119,19 @@
 
 	$effect(() => {
 		fetchStatus();
-		fetchLogs();
-		const statusInterval = setInterval(fetchStatus, 8000);
-		const logsInterval   = setInterval(fetchLogs,   5000);
-		return () => { clearInterval(statusInterval); clearInterval(logsInterval); };
+		mcLogs = [];
+
+		const es = new EventSource('/api/admin/server?action=stream');
+		es.onmessage = (e) => {
+			try {
+				const line = JSON.parse(e.data) as string;
+				mcLogs = [...mcLogs.slice(-500), line];
+				autoScroll();
+			} catch { /* ignore */ }
+		};
+
+		const statusInterval = setInterval(fetchStatus, 3000);
+		return () => { es.close(); clearInterval(statusInterval); };
 	});
 </script>
 
@@ -406,10 +406,10 @@
 		<!-- Footer -->
 		<div style="padding: 0.4rem 1rem; background: #0a0a12; border-top: 1px solid #1e153060; display: flex; align-items: center; justify-content: space-between;">
 			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.62rem; color: #374151;">
-				Rafraîchissement auto toutes les 5s · {mcLogs.length} lignes
+				Streaming temps réel · {mcLogs.length} lignes
 			</span>
 			<button
-				onclick={() => { fetchStatus(); fetchLogs(); }}
+				onclick={() => fetchStatus()}
 				style="font-family:'Share Tech Mono',monospace; font-size: 0.62rem; color: #475569; background: none; border: none; cursor: pointer; padding: 0.2rem 0.5rem;"
 				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.color = '#7c3aed'; }}
 				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.color = '#475569'; }}

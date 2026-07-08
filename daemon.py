@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """
 Shinsei Control Daemon — écoute sur 0.0.0.0:4242
-Gère le démarrage/arrêt/commandes du serveur Minecraft via screen.
-Protégé par token X-Token. Assure-toi que le port 4242 est bloqué
-depuis l'extérieur par le pare-feu VPS (ufw/iptables).
+Gère le démarrage/arrêt/commandes/streaming du serveur Minecraft via screen.
+Protégé par token X-Token. Bloque le port 4242 depuis l'extérieur (ufw/iptables).
 """
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import subprocess, json, os, traceback
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+import subprocess, json, os, traceback, time, collections
 
 TOKEN      = os.environ.get('CONTROL_TOKEN', '')
 SCREEN     = 'shinsei-mc'
@@ -83,8 +82,38 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 self.reply(200, {'lines': [f'[Erreur: {traceback.format_exc().splitlines()[-1]}]']})
 
+        elif self.path == '/stream':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/event-stream; charset=utf-8')
+            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Connection', 'keep-alive')
+            self.send_header('X-Accel-Buffering', 'no')
+            self.end_headers()
+            try:
+                with open(LOG_FILE, 'r', errors='replace') as f:
+                    # Envoie les 100 dernières lignes immédiatement
+                    last = collections.deque(f, 100)
+                    for line in last:
+                        self._sse(line.rstrip())
+                    # Puis tail -f en temps réel
+                    while True:
+                        line = f.readline()
+                        if line:
+                            self._sse(line.rstrip())
+                        else:
+                            time.sleep(0.15)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            except FileNotFoundError:
+                self._sse('[Log file introuvable]')
+
         else:
             self.reply(404, {'ok': False, 'message': 'Route inconnue'})
+
+    def _sse(self, line: str):
+        data = f"data: {json.dumps(line)}\n\n"
+        self.wfile.write(data.encode('utf-8'))
+        self.wfile.flush()
 
     def reply(self, code: int, data: dict):
         body = json.dumps(data, ensure_ascii=False).encode('utf-8')
@@ -101,5 +130,5 @@ if __name__ == '__main__':
     if not TOKEN:
         print('ERREUR: variable CONTROL_TOKEN non définie')
         exit(1)
-    print(f'[shinsei-control] Daemon sur 0.0.0.0:{PORT}')
-    HTTPServer(('0.0.0.0', PORT), Handler).serve_forever()
+    print(f'[shinsei-control] Daemon sur 0.0.0.0:{PORT} (threading)')
+    ThreadingHTTPServer(('0.0.0.0', PORT), Handler).serve_forever()

@@ -23,9 +23,37 @@ async function daemon(path: string, method: 'GET' | 'POST' = 'GET', body?: unkno
 	return res.json();
 }
 
-export const GET: RequestHandler = async ({ locals, url }) => {
+export const GET: RequestHandler = async ({ locals, url, request }) => {
 	if (!isAdmin(locals)) return json({ error: 'Accès refusé' }, { status: 403 });
 	const action = url.searchParams.get('action') ?? 'status';
+
+	if (action === 'stream') {
+		const daemonUrl = env.MINECRAFT_CONTROL_URL;
+		const token     = env.MINECRAFT_CONTROL_TOKEN;
+		if (!daemonUrl || !token) {
+			return new Response('data: "[Daemon non configuré]"\n\n', {
+				headers: { 'Content-Type': 'text/event-stream' },
+			});
+		}
+		try {
+			const res = await fetch(`${daemonUrl}/stream`, {
+				headers: { 'X-Token': token },
+				signal: request.signal,
+			});
+			return new Response(res.body, {
+				headers: {
+					'Content-Type': 'text/event-stream; charset=utf-8',
+					'Cache-Control': 'no-cache',
+					'X-Accel-Buffering': 'no',
+				},
+			});
+		} catch {
+			return new Response('data: "[Daemon inaccessible]"\n\n', {
+				headers: { 'Content-Type': 'text/event-stream' },
+			});
+		}
+	}
+
 	try {
 		const data = await daemon(action === 'logs' ? '/logs' : '/status');
 		return json(data);
