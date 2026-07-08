@@ -5,7 +5,7 @@ import { getMaintenanceConfig, setConfig } from '$lib/server/siteConfig';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user || locals.user.username !== env.ADMIN_MINECRAFT_USERNAME) {
-		redirect(302, '/');
+		throw redirect(302, '/');
 	}
 	return {
 		adminUser: locals.user.username,
