@@ -182,7 +182,7 @@
 			<p style="font-size:0.875rem;color:#94a3b8;line-height:1.65;max-width:32rem;margin:0 auto 1.5rem;">
 				Chaque grade boutique inclut des avantages Discord exclusifs : salons privés, rôles colorés, vocaux VIP, annonces prioritaires.
 			</p>
-			<a href="https://discord.gg/DcN95Dbx4" style="
+			<a href="https://discord.gg/YtsrPnwz5T" style="
 				display:inline-block;
 				font-family:'Rajdhani',sans-serif;font-weight:900;font-size:0.875rem;letter-spacing:0.1em;
 				padding:0.75rem 2rem;border-radius:0.375rem;

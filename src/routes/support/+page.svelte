@@ -256,7 +256,7 @@
 
 				<p style="text-align:center; color:#374151; font-size:0.75rem;">
 					Pour une réponse rapide, tu peux aussi ouvrir un ticket directement sur
-					<a href="https://discord.gg/DcN95Dbx4" target="_blank" rel="noopener noreferrer"
+					<a href="https://discord.gg/YtsrPnwz5T" target="_blank" rel="noopener noreferrer"
 						style="color:#7c3aed; text-decoration:none;">notre Discord</a>.
 				</p>
 			</form>

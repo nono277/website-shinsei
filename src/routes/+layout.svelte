@@ -176,7 +176,7 @@
 					<p style="font-family:'Share Tech Mono',monospace; font-size: 0.75rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.75rem;">Communauté</p>
 					<div style="display: flex; flex-direction: column; gap: 0.5rem;">
 						{#each [
-							['Discord',   'https://discord.gg/DcN95Dbx4'],
+							['Discord',   'https://discord.gg/YtsrPnwz5T'],
 							['YouTube',   'https://www.youtube.com/@Shinsei-off'],
 							['TikTok',    'https://www.tiktok.com/@shinsei_officiel'],
 							['Instagram', 'https://www.instagram.com/shinsei.officiel?igsh=MTAwbno2bXZ5OXZmMw=='],

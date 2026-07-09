@@ -297,7 +297,7 @@
 						border-radius: 0.375rem; text-decoration: none;
 						border: 1px solid #9f67ff; box-shadow: 0 0 14px #7c3aed40;
 					">JOUER</a>
-					<a href="https://discord.gg/DcN95Dbx4" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false} style="
+					<a href="https://discord.gg/YtsrPnwz5T" target="_blank" rel="noopener noreferrer" onclick={() => menuOpen = false} style="
 						display: flex; align-items: center; justify-content: center; gap: 0.6rem;
 						width: 100%; font-family:'Rajdhani',sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em;
 						padding: 0.55rem 0; background: #5865f210; color: #a5b4fc;

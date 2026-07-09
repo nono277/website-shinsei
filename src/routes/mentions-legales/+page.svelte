@@ -61,7 +61,7 @@
 					title: '6. Contact',
 					content: `Pour toute question relative aux présentes mentions légales :<br/><br/>
 					Email : <a href="mailto:shinsei.serv@gmail.com" style="color:#7c3aed;">shinsei.serv@gmail.com</a><br/>
-					Discord : <a href="https://discord.gg/DcN95Dbx4" target="_blank" rel="noopener noreferrer" style="color:#7c3aed;">discord.gg/DcN95Dbx4</a>`
+					Discord : <a href="https://discord.gg/YtsrPnwz5T" target="_blank" rel="noopener noreferrer" style="color:#7c3aed;">discord.gg/DcN95Dbx4</a>`
 				},
 			] as section}
 				<div style="background:#0a0a14;border:1px solid #1e1530;border-radius:0.75rem;padding:1.75rem;">
