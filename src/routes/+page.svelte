@@ -83,16 +83,16 @@
 
 	// Dernière mise à jour mise en avant sur l'accueil (voir /telecharger pour le changelog complet).
 	const latestUpdate = {
-		version: 'v1.0.7',
-		date: '6 JUILLET 2026',
-		title: 'Quêtes, PNJ vivants & Manuel de l\'Éveillé',
-		intro: "Un vrai fil d'aventure : un système de quêtes complet, des habitants qui peuplent Tokyo, un livre d'accueil pour bien démarrer et une première connexion repensée.",
+		version: 'v1.0.9',
+		date: '9 JUILLET 2026',
+		title: 'Élites, Nuits de Sang & grande refonte du combat',
+		intro: "Le monde devient dangereux : des élites dorées rôdent, des meutes tendent des embuscades, et certaines nuits… tout se déchaîne. Combat, progression et butin entièrement rééquilibrés.",
 		highlights: [
-			'Système de quêtes : /quest ou le bouton QUÊTES dans l\'inventaire — 1 principale + 9 secondaires, récompenses en éclats et en argent.',
-			'Suivi de quête épinglé dans la barre latérale, notification de fin et badge « à réclamer ».',
-			'15 habitants à dialogues dans Tokyo + PNJ de service au spawn (marché, compétences, guilde, faction).',
-			'Manuel de l\'Éveillé remis à la première connexion (ou via /guide).',
-			'Première connexion repensée + messages WorldGuard & EssentialsX en français.',
+			'Élites errantes ✦ : coriaces, mais éclats ×4 et butin presque garanti — et gare aux embuscades de meutes entières.',
+			'Nuits de Sang : les créatures affluent et frappent plus fort, chaque kill rapporte éclats ×2. Survivez jusqu\'à l\'aube.',
+			'Combat rééquilibré : vol de vie supprimé, armure plafonnée (fini l\'invincible), 21 compétences réparées.',
+			'Butin retravaillé pour les 5 classes : les armes légendaires sont réservées aux grades Souverain et Abyssal.',
+			'Failles plus fréquentes, textures réalistes Patrix 32x, téléportation canalisée, système AFK, éclairs violets.',
 		],
 	};
 </script>

@@ -8,6 +8,22 @@
 	// La 1re entrée est considérée comme la version ACTUELLE.
 	const changelog: ChangelogEntry[] = [
 		{
+			version: 'v1.0.9', date: '9 juillet 2026',
+			changes: [
+				'Élites errantes ✦ : des monstres dorés rôdent, coriaces mais généreux — éclats ×4 et butin presque garanti. Des meutes entières peuvent aussi tendre des embuscades.',
+				'Nuits de Sang : certaines nuits (annoncées à la tombée du jour), les créatures affluent et frappent plus fort… mais chaque kill rapporte éclats ×2. Survivez jusqu\'à l\'aube.',
+				'Le monde a changé : les monstres ordinaires restent faibles (Nv 1-25) partout — la vraie menace, ce sont les créatures des mods, de plus en plus puissantes en s\'éloignant de Tokyo (jusqu\'au Nv 150). Elles ne brûlent plus au soleil.',
+				'Failles plus fréquentes : jusqu\'à 8 ouvertes en même temps, une nouvelle toutes les 20 minutes.',
+				'Combat rééquilibré : vol de vie supprimé (compétences remplacées par des bonus offensifs), l\'armure ne rend plus invincible, 21 compétences « +% dégâts » réparées, capacités « 1×/combat » réarmées après 30 s hors combat.',
+				'Progression durcie : 1 point de stat par niveau, farmer des monstres trop faibles ne rapporte presque rien, armes moddées bridées selon votre grade.',
+				'Butin retravaillé pour les 5 classes : chaque grade a ses objets, armes légendaires réservées aux grades Souverain et Abyssal.',
+				'Chat refondu : couleurs de grade unifiées, une couleur par type de commande, badges corrigés. Éclairs d\'orage violets.',
+				'Nouveautés : système AFK (/afk), téléportation /spawn canalisée 3 s (annulée si vous bougez ou prenez un coup), Manuel de l\'Éveillé enrichi (/guide).',
+				'Corrections : duplication du stuff à la mort en Hardcore, écran de choix de classe qui se réinitialisait, reset de classe complet.',
+				'Performances : mods d\'optimisation serveur et client. Le pack de textures réaliste Patrix 32x rejoint le modpack.',
+			]
+		},
+		{
 			version: 'v1.0.7', date: '6 juillet 2026',
 			changes: [
 				'Système de quêtes complet : ouvre le journal avec /quest ou le bouton QUÊTES dans l\'inventaire. Une quête principale et 9 secondaires, avec récompenses en éclats et en argent.',
@@ -163,7 +179,7 @@
 		</a>
 
 		<div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:center;">
-			{#each ['v1.0.7', 'Minecraft 1.20.1 Forge', '~148 MB', 'Gratuit'] as item, i}
+			{#each ['v1.0.9', 'Minecraft 1.20.1 Forge', '~155 MB', 'Gratuit'] as item, i}
 				{#if i > 0}<span style="width:3px; height:3px; border-radius:50%; background:#374151;"></span>{/if}
 				<span class="label-mono" style="color:#4b5563;">{item}</span>
 			{/each}
