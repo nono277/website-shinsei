@@ -54,6 +54,19 @@ db.exec(`
 		date TEXT PRIMARY KEY,
 		peak INTEGER NOT NULL DEFAULT 0
 	);
+	CREATE TABLE IF NOT EXISTS mc_join_events (
+		id       TEXT PRIMARY KEY,
+		uuid     TEXT NOT NULL,
+		username TEXT NOT NULL,
+		date     TEXT NOT NULL,
+		ts       INTEGER NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS idx_mc_join_events_date ON mc_join_events(date);
+	CREATE INDEX IF NOT EXISTS idx_mc_join_events_uuid ON mc_join_events(uuid);
+	CREATE TABLE IF NOT EXISTS mc_player_samples (
+		ts    INTEGER PRIMARY KEY,
+		count INTEGER NOT NULL
+	);
 `);
 
 // Migration : ajoute next_vote_at si la colonne n'existe pas encore

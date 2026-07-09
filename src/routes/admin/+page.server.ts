@@ -81,15 +81,8 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 		}
 	} catch { /* serveur offline */ }
 
-	// Enregistre le pic du jour
-	if (serverOnline) {
-		const today = new Date().toISOString().slice(0, 10);
-		db.prepare(`
-			INSERT INTO server_daily_peaks (date, peak) VALUES (?, ?)
-			ON CONFLICT(date) DO UPDATE SET peak = MAX(peak, excluded.peak)
-		`).run(today, serverPlayers);
-	}
-
+	// Les pics journaliers et les connexions serveur sont enregistrés en continu
+	// par le tracker ($lib/server/mcTracker), plus besoin d'une visite admin.
 	const cutoffDate = new Date(since14).toISOString().slice(0, 10);
 	const rawServerPeaks = db.prepare(`
 		SELECT date, peak as count FROM server_daily_peaks WHERE date >= ? ORDER BY date ASC
@@ -101,6 +94,20 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 		SELECT date, count FROM download_stats WHERE date >= ? ORDER BY date ASC
 	`).all(cutoffDate) as { date: string; count: number }[];
 	const dailyDownloads = fillDays(rawDownloads, 14);
+
+	// Connexions au serveur MC par jour - 14 jours (alimenté par le tracker)
+	const rawServerJoins = db.prepare(`
+		SELECT date, COUNT(*) as count FROM mc_join_events WHERE date >= ? GROUP BY date ORDER BY date ASC
+	`).all(cutoffDate) as { date: string; count: number }[];
+	const dailyServerJoins = fillDays(rawServerJoins, 14);
+
+	// Total de connexions serveur par joueur (uuid = '' → connexions anonymes du mode repli)
+	const topServerPlayers = db.prepare(`
+		SELECT username, uuid, COUNT(*) as count, MAX(ts) as last_ts
+		FROM mc_join_events WHERE uuid != ''
+		GROUP BY uuid ORDER BY count DESC LIMIT 8
+	`).all() as { username: string; uuid: string; count: number; last_ts: number }[];
+	const totalServerJoins = (db.prepare('SELECT COUNT(*) as c FROM mc_join_events').get() as { c: number }).c;
 
 	// Votes par site - 30 jours
 	const votesBySite = db.prepare(`
@@ -154,6 +161,9 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 		dailyLogins,
 		dailyServerPeaks,
 		dailyDownloads,
+		dailyServerJoins,
+		topServerPlayers,
+		totalServerJoins,
 		topVoters,
 		votesBySite,
 		activeUsersList,

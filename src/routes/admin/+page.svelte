@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import LineChart from '$lib/components/LineChart.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -26,12 +27,38 @@
 		return 'à l\'instant';
 	}
 
-	const maxLogins      = $derived(Math.max(...data.dailyLogins.map(d => d.count), 1));
-	const maxServerPeaks = $derived(Math.max(...data.dailyServerPeaks.map(d => d.count), 1));
-	const maxDownloads   = $derived(Math.max(...data.dailyDownloads.map(d => d.count), 1));
 	const maxVotesBySite = $derived(Math.max(...data.votesBySite.map(v => v.count), 1));
-	const maxHourly      = $derived(Math.max(...data.hourlyActivity.map(h => h.count), 1));
 	const maxVotes       = $derived(Math.max(...data.topVoters.map(v => v.count), 1));
+	const maxServerJoins = $derived(Math.max(...data.topServerPlayers.map(p => p.count), 1));
+
+	// Points des courbes (composant LineChart)
+	const loginPoints    = $derived(data.dailyLogins.map(d => ({ label: d.label, value: d.count })));
+	const peakPoints     = $derived(data.dailyServerPeaks.map(d => ({ label: d.label, value: d.count })));
+	const downloadPoints = $derived(data.dailyDownloads.map(d => ({ label: d.label, value: d.count })));
+	const joinPoints     = $derived(data.dailyServerJoins.map(d => ({ label: d.label, value: d.count })));
+	const hourlyPoints   = $derived(data.hourlyActivity.map(h => ({ label: String(h.hour).padStart(2, '0') + 'h', value: h.count })));
+
+	// ── Temps réel serveur (échantillons du tracker, maj toutes les 30 s) ────
+	let rtSamples    = $state<{ ts: number; count: number }[]>([]);
+	let rtJoinsToday = $state(0);
+	let rtCurrent    = $state(0);
+
+	async function fetchMetrics() {
+		try {
+			const r = await fetch('/api/admin/metrics?h=3');
+			if (!r.ok) return;
+			const d = await r.json();
+			rtSamples    = d.samples ?? [];
+			rtJoinsToday = d.joinsToday ?? 0;
+			rtCurrent    = d.current ?? 0;
+		} catch { /* offline */ }
+	}
+
+	const rtPoints = $derived(rtSamples.map(s => ({
+		label: new Date(s.ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+		value: s.count,
+	})));
+	const rtLabelEvery = $derived(Math.max(1, Math.ceil(rtPoints.length / 7)));
 
 	function gradeColor(grade: string): string {
 		const g = (grade ?? '').toLowerCase();
@@ -141,6 +168,7 @@
 
 	$effect(() => {
 		fetchStatus();
+		fetchMetrics();
 		mcLogs = [];
 
 		const es = new EventSource('/api/admin/server?action=stream');
@@ -152,8 +180,9 @@
 			} catch { /* ignore */ }
 		};
 
-		const statusInterval = setInterval(fetchStatus, 2000);
-		return () => { es.close(); clearInterval(statusInterval); };
+		const statusInterval  = setInterval(fetchStatus, 2000);
+		const metricsInterval = setInterval(fetchMetrics, 30_000);
+		return () => { es.close(); clearInterval(statusInterval); clearInterval(metricsInterval); };
 	});
 </script>
 
@@ -399,6 +428,83 @@
 		</div>
 	</div>
 
+	<!-- Joueurs en ligne — temps réel -->
+	<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem;">
+		<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+			<div style="display: flex; align-items: center; gap: 0.6rem;">
+				<div class="live-dot"></div>
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Joueurs en ligne — temps réel</p>
+			</div>
+			<div style="display: flex; align-items: baseline; gap: 1rem;">
+				<span style="font-family:'Rajdhani',sans-serif; font-size: 1.6rem; font-weight: 900; color: #2dd4bf; line-height: 1;">{rtCurrent}</span>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">3 dernières heures · maj 30 s</span>
+			</div>
+		</div>
+		{#if rtPoints.length > 1}
+			<LineChart points={rtPoints} color="#0d9488" unit="joueur" labelEvery={rtLabelEvery} height={150} smooth={false} ariaLabel="Joueurs en ligne sur le serveur, temps réel" />
+		{:else}
+			<div style="height: 150px; display: flex; align-items: center; justify-content: center; font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #374151;">
+				Collecte en cours — le tracker échantillonne toutes les 30 secondes
+			</div>
+		{/if}
+	</div>
+
+	<!-- Connexions serveur / jour + Top connexions -->
+	<div class="charts-grid" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
+
+		<!-- Connexions au serveur par jour -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Connexions serveur</p>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">{rtJoinsToday} aujourd'hui · 14 jours</span>
+			</div>
+			{#if data.totalServerJoins === 0}
+				<div style="height: 130px; display: flex; align-items: center; justify-content: center; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #374151; padding: 0 1rem;">
+					Aucune donnée — le suivi des connexions démarre avec cette mise à jour du site
+				</div>
+			{:else}
+				<LineChart points={joinPoints} color="#0891b2" unit="connexion" labelEvery={2} height={130} ariaLabel="Connexions au serveur Minecraft par jour" />
+			{/if}
+		</div>
+
+		<!-- Total de connexions par joueur -->
+		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
+			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Top connexions serveur</p>
+				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">total par joueur</span>
+			</div>
+			{#if data.topServerPlayers.length === 0}
+				<p style="font-family:'Share Tech Mono',monospace; font-size: 0.72rem; color: #374151; line-height: 1.6;">
+					En attente de données nominatives — nécessite le plugin à jour (endpoint /players/online)
+				</p>
+			{:else}
+				<div style="display: flex; flex-direction: column; gap: 0.55rem; max-height: 200px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #1e1530 transparent;">
+					{#each data.topServerPlayers as p}
+						<div>
+							<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.2rem;">
+								<div style="display: flex; align-items: center; gap: 0.45rem; min-width: 0;">
+									<img src="https://crafatar.com/avatars/{p.uuid}?size=18&overlay" alt={p.username} width="18" height="18"
+										style="border-radius: 3px; image-rendering: pixelated; flex-shrink: 0;"
+										onerror={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }}
+									/>
+									<span style="font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{p.username}</span>
+								</div>
+								<span style="flex-shrink: 0;">
+									<span style="font-family:'Rajdhani',sans-serif; font-size: 0.9rem; font-weight: 700; color: #22d3ee;">{p.count}</span>
+									<span style="font-family:'Share Tech Mono',monospace; font-size: 0.55rem; color: #374151;"> · {timeAgo(p.last_ts)}</span>
+								</span>
+							</div>
+							<div style="height: 3px; background: #1e1530; border-radius: 9999px; overflow: hidden;">
+								<div style="height: 100%; width: {Math.round((p.count / maxServerJoins) * 100)}%; background: linear-gradient(to right, #0891b2, #22d3ee); border-radius: 9999px;"></div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+	</div>
+
 	<!-- Charts: connexions site + joueurs serveur -->
 	<div class="charts-grid" style="display: grid; gap: 0.75rem; margin-bottom: 1rem;">
 
@@ -408,54 +514,22 @@
 				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Connexions au site</p>
 				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">14 derniers jours</span>
 			</div>
-			<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px;">
-				{#each data.dailyLogins as day}
-					{@const pct = Math.round((day.count / maxLogins) * 100)}
-					<div
-						style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
-						background: {day.count > 0 ? 'linear-gradient(to top, #7c3aed, #a78bfa)' : '#1e1530'};
-						border-radius: 2px 2px 0 0; transition: height 0.3s;"
-						title="{day.count} connexion{day.count !== 1 ? 's' : ''} · {day.date}"
-					></div>
-				{/each}
-			</div>
-			<div style="display: flex; gap: 3px; margin-top: 5px;">
-				{#each data.dailyLogins as day, i}
-					<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{day.label}</div>
-				{/each}
-			</div>
+			<LineChart points={loginPoints} color="#8b5cf6" unit="connexion" labelEvery={2} height={130} ariaLabel="Connexions au site par jour" />
 		</div>
 
 		<!-- Joueurs sur le serveur (pic journalier) -->
 		<div style="background: #0d0d15; border: 1px solid #1e1530; border-radius: 0.75rem; padding: 1.25rem;">
 			<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-				<div>
-					<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Joueurs sur le serveur</p>
-				</div>
+				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Joueurs sur le serveur</p>
 				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">pic · 14 jours</span>
 			</div>
 			{#if data.dailyServerPeaks.every(d => d.count === 0)}
-				<div style="height: 100px; display: flex; align-items: center; justify-content: center; font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #374151;">
-					Aucune donnée — les pics s'enregistrent à chaque visite de l'admin
+				<div style="height: 130px; display: flex; align-items: center; justify-content: center; font-family:'Share Tech Mono',monospace; font-size: 0.68rem; color: #374151;">
+					Aucune donnée — les pics s'enregistrent automatiquement toutes les 30 s
 				</div>
 			{:else}
-				<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px;">
-					{#each data.dailyServerPeaks as day}
-						{@const pct = Math.round((day.count / maxServerPeaks) * 100)}
-						<div
-							style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
-							background: {day.count > 0 ? 'linear-gradient(to top, #0d9488, #5eead4)' : '#1e1530'};
-							border-radius: 2px 2px 0 0; transition: height 0.3s;"
-							title="{day.count} joueur{day.count !== 1 ? 's' : ''} max · {day.date}"
-						></div>
-					{/each}
-				</div>
+				<LineChart points={peakPoints} color="#0d9488" unit="joueur" labelEvery={2} height={130} ariaLabel="Pic de joueurs sur le serveur par jour" />
 			{/if}
-			<div style="display: flex; gap: 3px; margin-top: 5px;">
-				{#each data.dailyServerPeaks as day, i}
-					<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{day.label}</div>
-				{/each}
-			</div>
 		</div>
 
 	</div>
@@ -469,22 +543,7 @@
 				<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Téléchargements launcher</p>
 				<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">14 derniers jours</span>
 			</div>
-			<div style="display: flex; align-items: flex-end; gap: 3px; height: 100px;">
-				{#each data.dailyDownloads as day}
-					{@const pct = Math.round((day.count / maxDownloads) * 100)}
-					<div
-						style="flex: 1; height: {Math.max(pct, day.count > 0 ? 3 : 0)}%; min-height: {day.count > 0 ? '4px' : '2px'};
-						background: {day.count > 0 ? 'linear-gradient(to top, #b45309, #fbbf24)' : '#1e1530'};
-						border-radius: 2px 2px 0 0; transition: height 0.3s;"
-						title="{day.count} téléchargement{day.count !== 1 ? 's' : ''} · {day.date}"
-					></div>
-				{/each}
-			</div>
-			<div style="display: flex; gap: 3px; margin-top: 5px;">
-				{#each data.dailyDownloads as day, i}
-					<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.5rem; color: {i % 2 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{day.label}</div>
-				{/each}
-			</div>
+			<LineChart points={downloadPoints} color="#d97706" unit="téléchargement" labelEvery={2} height={130} ariaLabel="Téléchargements du launcher par jour" />
 		</div>
 
 		<!-- Votes par site -->
@@ -520,24 +579,7 @@
 			<p style="font-family:'Rajdhani',sans-serif; font-size: 0.85rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.1em; text-transform: uppercase; margin: 0;">Activité par heure</p>
 			<span style="font-family:'Share Tech Mono',monospace; font-size: 0.65rem; color: #374151;">connexions site · 30 jours</span>
 		</div>
-		<div style="display: flex; align-items: flex-end; gap: 2px; height: 60px;">
-			{#each data.hourlyActivity as h}
-				{@const pct = Math.round((h.count / maxHourly) * 100)}
-				<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;">
-					<div
-						style="width: 100%; height: {Math.max(pct, h.count > 0 ? 4 : 0)}%; min-height: {h.count > 0 ? '3px' : '2px'};
-						background: {h.count > 0 ? `rgba(124,58,237,${0.2 + (pct / 100) * 0.8})` : '#1e1530'};
-						border-radius: 2px 2px 0 0; transition: height 0.3s; height: {Math.max(pct, h.count > 0 ? 5 : 2)}px; max-height: 60px;"
-						title="{h.count} connexion{h.count !== 1 ? 's' : ''} à {String(h.hour).padStart(2,'0')}h"
-					></div>
-				</div>
-			{/each}
-		</div>
-		<div style="display: flex; gap: 2px; margin-top: 5px;">
-			{#each data.hourlyActivity as h}
-				<div style="flex: 1; text-align: center; font-family:'Share Tech Mono',monospace; font-size: 0.45rem; color: {h.hour % 3 === 0 ? '#475569' : 'transparent'}; white-space: nowrap; overflow: hidden;">{String(h.hour).padStart(2,'0')}</div>
-			{/each}
-		</div>
+		<LineChart points={hourlyPoints} color="#8b5cf6" unit="connexion" labelEvery={3} height={110} ariaLabel="Connexions au site par heure de la journée" />
 	</div>
 
 	<!-- Console serveur Minecraft -->
@@ -820,6 +862,21 @@
 	/* Charts side by side */
 	.charts-grid {
 		grid-template-columns: 1fr 1fr;
+	}
+
+	.live-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #2dd4bf;
+		box-shadow: 0 0 8px #2dd4bf80;
+		animation: pulse 2s infinite;
+		flex-shrink: 0;
+	}
+
+	@keyframes pulse {
+		0%, 100% { opacity: 1; }
+		50%      { opacity: 0.35; }
 	}
 
 	@media (max-width: 640px) {
