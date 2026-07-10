@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import LineChart from '$lib/components/LineChart.svelte';
+	import AdminTabs from '$lib/components/admin/AdminTabs.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -192,6 +193,8 @@
 </svelte:head>
 
 <div class="admin-wrap">
+
+	<AdminTabs active="overview" />
 
 	<!-- Header -->
 	<div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
