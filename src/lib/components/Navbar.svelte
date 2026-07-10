@@ -189,8 +189,8 @@
 	<button
 		onclick={() => menuOpen = !menuOpen}
 		aria-label="Menu"
-		style="display: flex; align-items: center; justify-content: center; padding: 0.5rem; color: #94a3b8; background: none; border: none; cursor: pointer;"
-		class="md:hidden"
+		style="align-items: center; justify-content: center; padding: 0.5rem; color: #94a3b8; background: none; border: none; cursor: pointer;"
+		class="flex md:hidden"
 	>
 		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
 			{#if menuOpen}
