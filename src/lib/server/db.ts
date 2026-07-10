@@ -67,6 +67,12 @@ db.exec(`
 		ts    INTEGER PRIMARY KEY,
 		count INTEGER NOT NULL
 	);
+	CREATE TABLE IF NOT EXISTS discord_links (
+		discord_id         TEXT PRIMARY KEY,
+		minecraft_uuid     TEXT NOT NULL,
+		minecraft_username TEXT NOT NULL,
+		linked_at          INTEGER NOT NULL
+	);
 `);
 
 // Migration : ajoute next_vote_at si la colonne n'existe pas encore
