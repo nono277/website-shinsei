@@ -52,7 +52,8 @@
       "Bash(unzip -p target/shinsei-core-1.0.0.jar fr/shinsei/core/http/StatsHttpServer.class)",
       "Read(//z/documents/shinsei/mods créer/shinsei-core/**)",
       "Read(//z/documents/shinsei/mods créer/shinsei-core/src/**)",
-      "Bash(./mvnw.cmd -q -DskipTests package)"
+      "Bash(./mvnw.cmd -q -DskipTests package)",
+      "PowerShell(\\(Get-FileHash \"Z:\\\\documents\\\\shinsei\\\\mods créer\\\\shinsei-core\\\\target\\\\shinsei-core-1.0.0.jar\"\\).Hash -eq \\(Get-FileHash \"Z:\\\\documents\\\\shinsei\\\\shinsei-serv\\\\plugins\\\\shinsei-core-1.0.0.jar\"\\).Hash)"
     ]
   }
 }
