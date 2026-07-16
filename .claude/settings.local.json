@@ -49,7 +49,10 @@
       "Bash(npm install *)",
       "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless --disable-gpu --window-size=1200,1100 --screenshot=\"C:\\\\Users\\\\sella\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\Z--documents-shinsei-website-shinsei\\\\6b7f078d-53f2-4447-9829-71aad985dfaa\\\\scratchpad\\\\charttest.png\" --virtual-time-budget=8000 \"http://localhost:5199/charttest\")",
       "PowerShell(git *)",
-      "Bash(unzip -p target/shinsei-core-1.0.0.jar fr/shinsei/core/http/StatsHttpServer.class)"
+      "Bash(unzip -p target/shinsei-core-1.0.0.jar fr/shinsei/core/http/StatsHttpServer.class)",
+      "Read(//z/documents/shinsei/mods créer/shinsei-core/**)",
+      "Read(//z/documents/shinsei/mods créer/shinsei-core/src/**)",
+      "Bash(./mvnw.cmd -q -DskipTests package)"
     ]
   }
 }

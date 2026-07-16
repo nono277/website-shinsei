@@ -28,7 +28,6 @@ export const GET: RequestHandler = async ({ locals, url, fetch }) => {
 		events,
 		distanceTraveled: 0,
 		damageDealt: 0,
-		deaths: 0,
 		...profile,
 	};
 

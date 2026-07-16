@@ -207,6 +207,7 @@ export async function fetchPlayerProfile(fetchFn: typeof fetch, username: string
 					dungeonsCompleted: Number(raw.dungeonsCompleted ?? 0),
 					faillesFermees: Number(raw.faillesFermees ?? 0),
 					totalTimeMinutes: Number(raw.playTimeMinutes ?? raw.playTime ?? 0),
+					deaths: Number(raw.deaths ?? 0),
 				};
 			}
 		}
@@ -223,5 +224,6 @@ export async function fetchPlayerProfile(fetchFn: typeof fetch, username: string
 		dungeonsCompleted: 0,
 		faillesFermees: 0,
 		totalTimeMinutes: 0,
+		deaths: 0,
 	};
 }
